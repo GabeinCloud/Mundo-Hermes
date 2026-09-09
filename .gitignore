@@ -1,0 +1,26 @@
+# Datos generados por Hermes Manager
+agents/
+bin/
+logs/
+trash/
+.hermes-manager-install.json
+
+# Paquetes y pruebas
+artifacts/
+tests/.tmp-*/
+*.zip
+*.sha256
+
+# Secretos y datos de Hermes
+**/.env
+**/config.yaml
+**/home/
+**/workspace/
+**/__pycache__/
+
+# Editores y sistema
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+Desktop.ini

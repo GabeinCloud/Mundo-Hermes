@@ -1,0 +1,28 @@
+name: test
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows-tests:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test Hermes Manager
+        shell: powershell
+        run: powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tests\Test-HermesManager.ps1
+      - name: Test public package
+        shell: powershell
+        run: powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tests\Test-PublicPackage.ps1
+      - name: Build release archive
+        shell: powershell
+        run: powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\Build-Release.ps1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Hermes-Manager-Windows
+          path: artifacts/*
