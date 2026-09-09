@@ -73,7 +73,7 @@ La configuración generada utiliza un sistema de archivos de contenedor de solo 
 
 Cada agente guarda su identidad, configuración, claves, conversaciones y documentos en `<carpeta de instalación>\agents\<nombre>\data`.
 
-No publiques ni adjuntes esa carpeta a incidencias. Los directorios de datos, alias, registros, estado y papelera están excluidos por `.gitignore` y por el generador de Releases.
+No publiques ni adjuntes esa carpeta a incidencias. Los directorios de datos, alias, registros y papelera están excluidos por `.gitignore` y por el generador de Releases.
 
 Consulta [GUIA-INSTALACION.md](GUIA-INSTALACION.md) para reproducir paso a paso la configuración, conocer todos los archivos generados y fijar una versión o digest concreto de la imagen.
 
