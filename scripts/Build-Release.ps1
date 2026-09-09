@@ -25,7 +25,7 @@ foreach ($path in @($stagingRoot, $zipPath, $hashPath)) {
 New-Item -ItemType Directory -Path $stagingRoot -Force | Out-Null
 
 $files = @(
-    '.gitignore', 'LICENSE', 'NOTICE.md', 'README.md', 'README.en.md',
+    '.gitignore', 'LICENSE', 'NOTICE.md', 'README.md', 'README.es.md',
     'GUIA-INSTALACION.md', 'SECURITY.md', 'CONTRIBUTING.md', 'CHANGELOG.md',
     'Instalar.cmd', 'Desinstalar.cmd', 'Activar alias globales.cmd',
     'Activar alias globales.ps1', 'Hermes Manager.cmd',

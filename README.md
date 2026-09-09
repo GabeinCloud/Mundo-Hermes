@@ -1,97 +1,99 @@
 # Hermes Manager for Windows
 
-[English](README.en.md)
+[Español](README.es.md)
 
-Configuración reproducible y gestor comunitario para crear agentes Hermes con Docker Desktop sin tener que escribir Docker Compose a mano.
+Reproducible configuration and a community manager for creating Hermes agents with Docker Desktop without writing Docker Compose by hand.
 
-> Este proyecto no es oficial ni está afiliado a Nous Research. La Release no incluye Hermes ni ninguna imagen Docker. Docker descarga la imagen pública externa `nousresearch/hermes-agent` cuando se necesita por primera vez.
+> This project is not official and is not affiliated with Nous Research. The Release does not include Hermes or any Docker image. Docker downloads the external public image `nousresearch/hermes-agent` when it is first needed.
 
-## Instalación rápida
+## Quick installation
 
-### Requisitos
+### Requirements
 
-- Windows 10 u 11 de 64 bits.
-- Virtualización y WSL 2 habilitados.
-- [Docker Desktop](https://www.docker.com/products/docker-desktop/) instalado y abierto.
+- 64-bit Windows 10 or 11.
+- Virtualization and WSL 2 enabled.
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) installed and running.
 
-No necesitas instalar Python, Git, PowerShell 7 ni Hermes directamente en Windows. Ollama solo es necesario para modelos locales.
+You do not need to install Python, Git, PowerShell 7 or Hermes directly on Windows. Ollama is only required for local models.
 
-### Desde una Release de GitHub
+### From a GitHub Release
 
-1. Descarga `Hermes-Manager-Windows-<versión>.zip` desde **Releases**.
-2. Descomprime el ZIP.
-3. Haz doble clic en `Instalar.cmd`.
-4. Pulsa Intro para usar la carpeta recomendada o escribe otra carpeta de instalación.
-5. Espera a que terminen las comprobaciones.
-6. Abre **Hermes Manager** desde el acceso directo del escritorio.
+1. Download `Hermes-Manager-Windows-<version>.zip` from **Releases**.
+2. Extract the ZIP.
+3. Double-click `Instalar.cmd`.
+4. Press Enter to use the recommended folder or enter another installation folder.
+5. Wait for the checks to finish.
+6. Open **Hermes Manager** from the desktop shortcut.
 
-Eso es todo. El ZIP incluye el instalador, los scripts, las configuraciones, la documentación y las pruebas del gestor. No incluye Docker Desktop ni la imagen de Hermes: Docker descarga esa imagen automáticamente al configurar o iniciar el primer agente.
+That is all. The ZIP contains the installer, scripts, configuration, documentation and manager tests. It does not contain Docker Desktop or the Hermes image: Docker downloads that image automatically when the first agent is configured or started.
 
-La carpeta recomendada es `%LOCALAPPDATA%\HermesManager`, pero puedes elegir otra durante la instalación. No se necesitan permisos de administrador si la ubicación elegida permite escribir al usuario. El instalador registra la carpeta `bin` de esa instalación en el `PATH` del usuario.
+The recommended folder is `%LOCALAPPDATA%\HermesManager`, but you can choose another location during installation. Administrator permissions are not required if your user can write to the selected location. The installer adds that installation's `bin` folder to the user `PATH`.
 
-#### Verificación opcional de la descarga
+#### Optional download verification
 
-La Release también publica un archivo `.sha256`. No es necesario para instalar, pero permite comprobar manualmente que el ZIP descargado no está dañado ni ha sido modificado. Se publica fuera del ZIP porque un archivo no puede verificar su propia descarga.
+The Release also publishes a `.sha256` file. It is not required for installation, but it lets you verify manually that the downloaded ZIP is neither corrupted nor modified. It is published separately because a file cannot verify its own download.
 
 ```powershell
-$zip = '.\Hermes-Manager-Windows-<versión>.zip'
-$esperado = ((Get-Content "$zip.sha256") -split '\s+')[0]
+$zip = '.\Hermes-Manager-Windows-<version>.zip'
+$expected = ((Get-Content "$zip.sha256") -split '\s+')[0]
 $actual = (Get-FileHash -Algorithm SHA256 $zip).Hash.ToLowerInvariant()
-if ($actual -ne $esperado) { throw 'El ZIP no coincide con el checksum publicado.' }
+if ($actual -ne $expected) { throw 'The ZIP does not match the published checksum.' }
 ```
 
-## Crear el primer agente
+## Create your first agent
 
-1. Abre `Hermes Manager`.
-2. Selecciona **1. Crear agente**.
-3. Indica nombre y finalidad.
-4. Elige un alias corto, por ejemplo `redactor` o `dev`.
-5. Completa el asistente oficial de proveedor y modelo.
-6. Inicia el agente.
+1. Open `Hermes Manager`.
+2. Select **1. Create agent**.
+3. Enter its name and purpose.
+4. Choose a short terminal alias, such as `writer` or `dev`.
+5. Complete the provider and model setup assistant.
+6. Start the agent.
 
-Al configurar o iniciar el primer agente, Docker descarga Hermes desde el registro si la imagen todavía no existe en el equipo. Esa descarga no forma parte del instalador ni de este repositorio. Después abre una terminal nueva y escribe únicamente su alias:
+When you configure or start the first agent, Docker downloads Hermes from the registry if the image is not already available on the computer. That download is not part of the installer or this repository. Then open a new terminal and enter only the selected alias:
 
 ```powershell
-redactor
+writer
 ```
 
-## Funciones
+## Features
 
-- Generar una configuración Docker Compose reproducible por agente.
-- Separar los datos de cada agente y no publicar puertos por defecto.
-- Configurar proveedor y modelo con el asistente de Hermes.
-- Iniciar, detener y abrir conversaciones.
-- Actualizar uno o todos los agentes.
-- Detectar modelos locales de Ollama.
-- Crear alias globales sin copiar scripts fuera de la instalación.
-- Mover agentes retirados a una papelera recuperable.
-- Diagnosticar Docker sin exponer secretos.
+- Generate a reproducible Docker Compose configuration for each agent.
+- Keep each agent's data separate and publish no ports by default.
+- Configure the provider and model with the Hermes setup assistant.
+- Start, stop and open conversations.
+- Update one agent or all agents.
+- Detect local Ollama models.
+- Create global aliases without copying scripts outside the installation.
+- Move removed agents to a recoverable trash folder.
+- Diagnose Docker without exposing secrets.
 
-La configuración generada utiliza un sistema de archivos de contenedor de solo lectura, elimina capacidades por defecto, impide ganar privilegios y limita CPU, memoria y procesos. La red Docker separa los agentes y permite salida a Internet para los proveedores configurados; no es una red sin conexión.
+The generated configuration uses a read-only container filesystem, drops default capabilities, prevents privilege escalation and limits CPU, memory and processes. The Docker network separates agents and allows outbound access to configured providers; it is not an offline network.
 
-## Datos y privacidad
+## Data and privacy
 
-Cada agente guarda su identidad, configuración, claves, conversaciones y documentos en `<carpeta de instalación>\agents\<nombre>\data`.
+Each agent stores its identity, configuration, credentials, conversations and documents under `<installation folder>\agents\<name>\data`.
 
-No publiques ni adjuntes esa carpeta a incidencias. Los directorios de datos, alias, registros y papelera están excluidos por `.gitignore` y por el generador de Releases.
+Do not publish or attach that folder to issues. Data, alias, log and trash directories are excluded by both `.gitignore` and the Release generator.
 
-Consulta [GUIA-INSTALACION.md](GUIA-INSTALACION.md) para reproducir paso a paso la configuración, conocer todos los archivos generados y fijar una versión o digest concreto de la imagen.
+See [GUIA-INSTALACION.md](GUIA-INSTALACION.md) for the complete step-by-step configuration, all generated files and instructions for pinning a specific image version or digest.
 
-## Comandos opcionales
+## Optional commands
 
 ```powershell
 hermes-manager
-# Los siguientes ejemplos usan la carpeta recomendada:
-& "$env:LOCALAPPDATA\HermesManager\hermes.cmd" crear redactor
+# The following examples use the recommended folder:
+& "$env:LOCALAPPDATA\HermesManager\hermes.cmd" crear writer
 & "$env:LOCALAPPDATA\HermesManager\hermes.cmd" actualizar todos
 ```
 
-## Actualización
+The command names remain in Spanish. Run `hermes ayuda` to display all available commands.
 
-- **Actualizar agente** descarga la imagen configurada y conserva sus datos.
-- Para actualizar Hermes Manager, ejecuta `Instalar.cmd` desde una Release más reciente y elige la misma carpeta utilizada anteriormente. El instalador sustituye solo los archivos de programa.
+## Updating
 
-## Desarrollo
+- **Update agent** downloads the configured image and preserves its data.
+- To update Hermes Manager, run `Instalar.cmd` from a newer Release and select the same installation folder. The installer replaces only program files.
+
+## Development
 
 ```powershell
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\tests\Test-HermesManager.ps1"
@@ -99,6 +101,6 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\tests\Test-PublicPack
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\scripts\Build-Release.ps1"
 ```
 
-## Seguridad y licencia
+## Security and license
 
-Consulta [SECURITY.md](SECURITY.md), [NOTICE.md](NOTICE.md) y [LICENSE](LICENSE). No incluyas claves, configuraciones de agentes ni registros en informes públicos.
+See [SECURITY.md](SECURITY.md), [NOTICE.md](NOTICE.md) and [LICENSE](LICENSE). Do not include credentials, agent configurations or logs in public reports.

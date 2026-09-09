@@ -24,7 +24,7 @@ function Assert-Equal {
 
 $requiredFiles = @(
     'Instalar.cmd', 'Desinstalar.cmd', 'Hermes Manager.cmd', 'hermes.cmd',
-    'HermesManager.ps1', 'settings.json', 'README.md', 'README.en.md',
+    'HermesManager.ps1', 'settings.json', 'README.md', 'README.es.md',
     'GUIA-INSTALACION.md', 'LICENSE', 'NOTICE.md', 'SECURITY.md',
     'CONTRIBUTING.md', 'CHANGELOG.md', 'src\HermesManager.psm1',
     'scripts\Install-HermesManager.ps1', 'scripts\Uninstall-HermesManager.ps1',
@@ -143,6 +143,7 @@ try {
     Assert-Equal $releaseImagePayloads.Count 0 'Release sin imágenes ni exportaciones de contenedores'
     Assert-True (@($entries | Where-Object { $_.Name -eq 'Instalar.cmd' }).Count -eq 1) 'Release contiene instalador'
     Assert-True (@($entries | Where-Object { $_.Name -eq 'README.md' }).Count -eq 1) 'Release contiene README'
+    Assert-True (@($entries | Where-Object { $_.Name -eq 'README.es.md' }).Count -eq 1) 'Release contiene README en español'
 
     $releasePackageRoot = Get-ChildItem -LiteralPath $ExpandedRoot -Directory | Where-Object {
         $_.Name -like 'Hermes-Manager-Windows-*'

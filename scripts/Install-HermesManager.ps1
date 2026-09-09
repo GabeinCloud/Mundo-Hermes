@@ -35,7 +35,7 @@ if ([string]::IsNullOrWhiteSpace($DestinationRoot) -or $DestinationRoot.Equals($
 
 $requiredSourceFiles = @(
     'Hermes Manager.cmd', 'hermes.cmd',
-    'HermesManager.ps1', 'settings.json', 'README.md', 'README.en.md',
+    'HermesManager.ps1', 'settings.json', 'README.md', 'README.es.md',
     'LICENSE', 'NOTICE.md', 'CHANGELOG.md', 'SECURITY.md', 'CONTRIBUTING.md'
 )
 foreach ($relative in $requiredSourceFiles) {
