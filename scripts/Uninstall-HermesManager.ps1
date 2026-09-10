@@ -1,8 +1,29 @@
 ﻿[CmdletBinding()]
-param([switch]$RemoveAllData)
+param(
+    [switch]$RemoveAllData,
+    [ValidateSet('es', 'en')][string]$Language = 'es'
+)
 
 $ErrorActionPreference = 'Stop'
 $InstallRoot = [IO.Path]::GetFullPath((Split-Path -Parent $PSScriptRoot))
+. (Join-Path $InstallRoot 'src\HermesLocalization.ps1')
+Set-HermesLanguage -Language $Language
+
+function Write-Host {
+    param(
+        [Parameter(Position = 0)][object[]]$Object,
+        [switch]$NoNewline,
+        [Nullable[ConsoleColor]]$ForegroundColor,
+        [Nullable[ConsoleColor]]$BackgroundColor,
+        [string]$Separator = ' '
+    )
+    Write-HermesLocalizedHost -Object $Object -NoNewline:$NoNewline -ForegroundColor $ForegroundColor -BackgroundColor $BackgroundColor -Separator $Separator
+}
+
+function Read-Host {
+    param([string]$Prompt)
+    Read-HermesLocalizedHost -Prompt $Prompt
+}
 $installPathRoot = [IO.Path]::GetPathRoot($InstallRoot)
 if (-not $InstallRoot.Equals($installPathRoot, [StringComparison]::OrdinalIgnoreCase)) {
     $InstallRoot = $InstallRoot.TrimEnd('\')
@@ -60,15 +81,17 @@ if ($agents.Count) {
     }
 }
 
-$confirmation = Read-Host 'Escribe DESINSTALAR para continuar'
-if ($confirmation -cne 'DESINSTALAR') {
+$confirmation = Read-Host $(if ($Language -eq 'en') { 'Escribe UNINSTALL para continuar' } else { 'Escribe DESINSTALAR para continuar' })
+$expectedConfirmation = if ($Language -eq 'en') { 'UNINSTALL' } else { 'DESINSTALAR' }
+if ($confirmation -cne $expectedConfirmation) {
     Write-Host 'Operación cancelada.'
     exit 0
 }
 
 if ($RemoveAllData -and $agents.Count) {
-    $dataConfirmation = Read-Host 'Escribe ELIMINAR DATOS para borrar permanentemente todos los agentes'
-    if ($dataConfirmation -cne 'ELIMINAR DATOS') { throw 'No se confirmó el borrado de datos.' }
+    $dataConfirmation = Read-Host $(if ($Language -eq 'en') { 'Escribe DELETE DATA para borrar permanentemente todos los agentes' } else { 'Escribe ELIMINAR DATOS para borrar permanentemente todos los agentes' })
+    $expectedDataConfirmation = if ($Language -eq 'en') { 'DELETE DATA' } else { 'ELIMINAR DATOS' }
+    if ($dataConfirmation -cne $expectedDataConfirmation) { throw 'No se confirmó el borrado de datos.' }
     foreach ($agent in $agents) { Stop-HermesAgent -Name $agent.Name -Root $InstallRoot }
 }
 
@@ -80,8 +103,13 @@ $remaining = @($userPath -split ';' | Where-Object {
 })
 [Environment]::SetEnvironmentVariable('Path', $(if ($remaining.Count) { ($remaining -join ';') + ';' } else { $null }), 'User')
 
-$shortcutPath = Join-Path ([Environment]::GetFolderPath('Desktop')) 'Hermes Manager.lnk'
-if (Test-Path -LiteralPath $shortcutPath) { Remove-Item -LiteralPath $shortcutPath -Force }
+$shortcutPaths = @(
+    (Join-Path ([Environment]::GetFolderPath('Desktop')) 'Hermes Manager.lnk'),
+    (Join-Path ([Environment]::GetFolderPath('Desktop')) 'Hermes Manager (English).lnk')
+)
+foreach ($shortcutPath in $shortcutPaths) {
+    if (Test-Path -LiteralPath $shortcutPath) { Remove-Item -LiteralPath $shortcutPath -Force }
+}
 
 if ($RemoveAllData) {
     Remove-Item -LiteralPath $InstallRoot -Recurse -Force

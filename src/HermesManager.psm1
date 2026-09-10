@@ -1,6 +1,6 @@
 ﻿Set-StrictMode -Version 2.0
 
-$script:ManagerVersion = '1.0.0'
+$script:ManagerVersion = '1.1.0'
 $script:DefaultImage = 'nousresearch/hermes-agent@sha256:41b9ed005cebcb3d3fb45206ce27cfb0356ba99b190c0924bab5141b15ad8e71'
 
 function Get-HermesRoot {
@@ -106,7 +106,8 @@ function New-HermesAgentFiles {
     param(
         [Parameter(Mandatory)][string]$Name,
         [Parameter(Mandatory)][string]$Purpose,
-        [string]$Root
+        [string]$Root,
+        [ValidateSet('es', 'en')][string]$Language = 'es'
     )
 
     if ([string]::IsNullOrWhiteSpace($Purpose)) {
@@ -206,6 +207,7 @@ OLLAMA_HOST=http://host.docker.internal:11434
         name = $slug
         display_name = $safeTitle
         purpose = $Purpose.Trim()
+        language = $Language
         created_at = [DateTime]::UtcNow.ToString('o')
         manager_version = $script:ManagerVersion
     }
@@ -238,6 +240,7 @@ function Get-HermesAgents {
                 DisplayName = [string]$metadata.display_name
                 Purpose = [string]$metadata.purpose
                 TerminalAlias = if ($aliasProperty) { [string]$aliasProperty.Value } else { '' }
+                    Language = if ($metadata.language -eq 'en') { 'en' } else { 'es' }
                 Path = $directory.FullName
                 CreatedAt = [string]$metadata.created_at
             }
@@ -359,17 +362,18 @@ function New-HermesAgentAlias {
         Remove-HermesAgentAlias -Name $agent.Name -Root $resolvedRoot
     }
 
+    $metadataPath = Join-Path $agent.Path 'agent.json'
+    $metadata = Get-Content -Raw -Encoding UTF8 -LiteralPath $metadataPath | ConvertFrom-Json
+    $launcherName = if ($metadata.language -eq 'en') { 'hermes-en.cmd' } else { 'hermes.cmd' }
     $launcher = @"
 @echo off
 rem HERMES_MANAGER_ALIAS=$($agent.Name)
 setlocal
-call "%~dp0..\hermes.cmd" abrir $($agent.Name)
+call "%~dp0..\$launcherName" abrir $($agent.Name)
 exit /b %ERRORLEVEL%
 "@
     Write-Utf8File -Path $aliasPath -Content ($launcher.TrimStart() + "`r`n")
 
-    $metadataPath = Join-Path $agent.Path 'agent.json'
-    $metadata = Get-Content -Raw -Encoding UTF8 -LiteralPath $metadataPath | ConvertFrom-Json
     $metadata | Add-Member -NotePropertyName terminal_alias -NotePropertyValue $aliasName -Force
     $metadata | Add-Member -NotePropertyName manager_version -NotePropertyValue $script:ManagerVersion -Force
     Write-Utf8File -Path $metadataPath -Content (($metadata | ConvertTo-Json -Depth 6) + "`n")

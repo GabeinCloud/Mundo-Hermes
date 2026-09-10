@@ -24,11 +24,14 @@ function Assert-Equal {
 
 $requiredFiles = @(
     'Instalar.cmd', 'Desinstalar.cmd', 'Hermes Manager.cmd', 'hermes.cmd',
+    'Install (English).cmd', 'Uninstall (English).cmd',
+    'Hermes Manager (English).cmd', 'hermes-en.cmd',
+    'Activate global aliases (English).cmd',
     'HermesManager.ps1', 'settings.json', 'README.md', 'README.es.md',
     'GUIA-INSTALACION.md', 'LICENSE', 'NOTICE.md', 'SECURITY.md',
     'CONTRIBUTING.md', 'CHANGELOG.md', 'src\HermesManager.psm1',
     'scripts\Install-HermesManager.ps1', 'scripts\Uninstall-HermesManager.ps1',
-    'scripts\Build-Release.ps1', '.github\workflows\test.yml'
+    'scripts\Build-Release.ps1', 'src\HermesLocalization.ps1', '.github\workflows\test.yml'
 )
 foreach ($relative in $requiredFiles) {
     Assert-True (Test-Path -LiteralPath (Join-Path $ProjectRoot $relative) -PathType Leaf) "Archivo público presente: $relative"
@@ -142,6 +145,9 @@ try {
     })
     Assert-Equal $releaseImagePayloads.Count 0 'Release sin imágenes ni exportaciones de contenedores'
     Assert-True (@($entries | Where-Object { $_.Name -eq 'Instalar.cmd' }).Count -eq 1) 'Release contiene instalador'
+    Assert-True (@($entries | Where-Object { $_.Name -eq 'Install (English).cmd' }).Count -eq 1) 'Release contiene instalador en ingles'
+    Assert-True (@($entries | Where-Object { $_.Name -eq 'Hermes Manager (English).cmd' }).Count -eq 1) 'Release contiene gestor en ingles'
+    Assert-True (@($entries | Where-Object { $_.Name -eq 'hermes-en.cmd' }).Count -eq 1) 'Release contiene comando ingles'
     Assert-True (@($entries | Where-Object { $_.Name -eq 'README.md' }).Count -eq 1) 'Release contiene README'
     Assert-True (@($entries | Where-Object { $_.Name -eq 'README.es.md' }).Count -eq 1) 'Release contiene README en español'
 

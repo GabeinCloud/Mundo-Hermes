@@ -2,6 +2,12 @@
 
 Todos los cambios relevantes se documentarán aquí.
 
+## 1.1.0 - 2026-09-10
+
+- Instalador y gestor disponibles con mensajes y comandos en español o inglés.
+- Accesos directos y alias ingleses separados para no duplicar la lógica del gestor.
+- Documentación ampliada sobre el propósito del proyecto, Releases y datos privados.
+
 ## 1.0.0 - 2026-09-09
 
 - Primera versión pública para Windows.

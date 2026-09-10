@@ -38,6 +38,8 @@ if ($actual -ne $esperado) { throw 'El ZIP no coincide con el checksum publicado
 
 Para instalar no necesitas clonar el repositorio. Descarga el ZIP de la sección **Releases**. Los enlaces **Source code (zip)** y **Source code (tar.gz)** de GitHub contienen el código fuente y no sustituyen al paquete de instalación.
 
+La variante predeterminada utiliza mensajes en español. Para una instalación en inglés, ejecuta `Install (English).cmd`; crea el acceso directo **Hermes Manager (English)** y el comando global `hermes-manager-en.cmd`. También incluye `Uninstall (English).cmd` y `Activate global aliases (English).cmd`.
+
 ## 3. Crear un agente
 
 1. Elige **Crear agente**.

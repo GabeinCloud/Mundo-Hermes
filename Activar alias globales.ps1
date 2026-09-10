@@ -1,9 +1,22 @@
 ﻿[CmdletBinding()]
-param()
+param([ValidateSet('es', 'en')][string]$Language = 'es')
 
 $ErrorActionPreference = 'Stop'
 $Root = $PSScriptRoot
 Import-Module (Join-Path $Root 'src\HermesManager.psm1') -Force
+. (Join-Path $Root 'src\HermesLocalization.ps1')
+Set-HermesLanguage -Language $Language
+
+function Write-Host {
+    param(
+        [Parameter(Position = 0)][object[]]$Object,
+        [switch]$NoNewline,
+        [Nullable[ConsoleColor]]$ForegroundColor,
+        [Nullable[ConsoleColor]]$BackgroundColor,
+        [string]$Separator = ' '
+    )
+    Write-HermesLocalizedHost -Object $Object -NoNewline:$NoNewline -ForegroundColor $ForegroundColor -BackgroundColor $BackgroundColor -Separator $Separator
+}
 
 $aliases = @(Get-HermesAgents -Root $Root | Where-Object { $_.TerminalAlias })
 if (-not $aliases.Count) {

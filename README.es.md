@@ -35,6 +35,8 @@ La carpeta recomendada es `%LOCALAPPDATA%\HermesManager`, pero puedes elegir otr
 
 No necesitas ejecutar `git clone` para instalar o utilizar Hermes Manager. La página de **Releases** contiene el paquete preparado para usuarios. Los ZIP de **Source code** que muestra GitHub contienen el código fuente del repositorio y están destinados al desarrollo, no a la instalación normal.
 
+Los archivos predeterminados muestran los mensajes en español. Las personas que prefieran inglés pueden ejecutar `Install (English).cmd`; instalará el acceso directo **Hermes Manager (English)** y el comando `hermes-en.cmd`. Para desinstalar con mensajes en inglés, ejecuta `Uninstall (English).cmd`.
+
 #### Verificación opcional de la descarga
 
 La Release también publica un archivo `.sha256`. No es necesario para instalar, pero permite comprobar manualmente que el ZIP descargado no está dañado ni ha sido modificado. Se publica fuera del ZIP porque un archivo no puede verificar su propia descarga.

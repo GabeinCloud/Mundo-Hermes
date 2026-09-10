@@ -3,12 +3,31 @@ param(
     [Parameter(Position = 0)][string]$Command = 'menu',
     [Parameter(Position = 1)][string]$AgentName,
     [Parameter(Position = 2)][string]$AliasName,
+    [ValidateSet('es', 'en')][string]$Language = 'es',
     [switch]$Confirmar
 )
 
 $ErrorActionPreference = 'Stop'
 $Root = $PSScriptRoot
 Import-Module (Join-Path $Root 'src\HermesManager.psm1') -Force
+. (Join-Path $Root 'src\HermesLocalization.ps1')
+Set-HermesLanguage -Language $Language
+
+function Write-Host {
+    param(
+        [Parameter(Position = 0)][object[]]$Object,
+        [switch]$NoNewline,
+        [Nullable[ConsoleColor]]$ForegroundColor,
+        [Nullable[ConsoleColor]]$BackgroundColor,
+        [string]$Separator = ' '
+    )
+    Write-HermesLocalizedHost -Object $Object -NoNewline:$NoNewline -ForegroundColor $ForegroundColor -BackgroundColor $BackgroundColor -Separator $Separator
+}
+
+function Read-Host {
+    param([string]$Prompt)
+    Read-HermesLocalizedHost -Prompt $Prompt
+}
 Initialize-HermesLayout -Root $Root | Out-Null
 
 if ($Host.Name -eq 'ConsoleHost') {
@@ -93,7 +112,7 @@ function New-AgentInteractive {
     $displayName = $RequestedName
     if (-not $displayName) { $displayName = Read-Host 'Nombre del agente (ejemplo: publisher)' }
     $purpose = Read-Host '¿Para qué servirá?'
-    $agent = New-HermesAgentFiles -Name $displayName -Purpose $purpose -Root $Root
+    $agent = New-HermesAgentFiles -Name $displayName -Purpose $purpose -Root $Root -Language $Language
     Write-HermesManagerLog -Root $Root -Message "Agente creado: $($agent.Name)"
     Write-Host
     Write-Host "Agente '$($agent.DisplayName)' creado." -ForegroundColor Green
@@ -227,6 +246,27 @@ function Show-Diagnostics {
 }
 
 function Show-Help {
+        if ($Language -eq 'en') {
+                Write-Host @'
+EASY USE
+    Double-click "Hermes Manager (English).cmd" to open the menu.
+
+OPTIONAL COMMANDS
+    hermes-en.cmd create [name]       Create and configure an agent
+    hermes-en.cmd setup [name]        Configure provider/model again
+    hermes-en.cmd start [name]        Start the instance
+    hermes-en.cmd chat [name]         Chat with the agent
+    hermes-en.cmd stop [name]         Stop the instance
+    hermes-en.cmd update [name]       Download and apply the current Hermes image
+    hermes-en.cmd update all          Update all agents
+    hermes-en.cmd remove [name]       Move the agent to the internal trash
+    hermes-en.cmd alias [agent] [alias] Create or change its global alias
+    hermes-en.cmd list                Show agents and status
+    hermes-en.cmd models              Show local Ollama models
+    hermes-en.cmd doctor              Check requirements
+'@
+                return
+        }
     Write-Host @'
 USO FÁCIL
   Haz doble clic en "Hermes Manager.cmd" para abrir el menú.
@@ -297,16 +337,16 @@ try {
     switch ($normalizedCommand) {
         { $_ -in @('', 'menu') } { Show-Menu; break }
         { $_ -in @('crear', 'create', 'nuevo') } { New-AgentInteractive -RequestedName $AgentName; break }
-        { $_ -in @('configurar', 'setup') } { Invoke-ConfigureAgent -RequestedName $AgentName; break }
+        { $_ -in @('configurar', 'setup', 'configure') } { Invoke-ConfigureAgent -RequestedName $AgentName; break }
         { $_ -in @('iniciar', 'start') } { Invoke-StartAgent -RequestedName $AgentName; break }
-        { $_ -in @('abrir', 'chat') } { Invoke-OpenAgent -RequestedName $AgentName; break }
+        { $_ -in @('abrir', 'chat', 'open') } { Invoke-OpenAgent -RequestedName $AgentName; break }
         { $_ -in @('detener', 'stop') } { Invoke-StopAgent -RequestedName $AgentName; break }
         { $_ -in @('actualizar', 'update') } { Invoke-UpdateAgent -RequestedName $AgentName; break }
-        { $_ -in @('eliminar', 'remove') } { Invoke-DeleteAgent -RequestedName $AgentName -AlreadyConfirmed:$Confirmar; break }
+        { $_ -in @('eliminar', 'remove', 'delete') } { Invoke-DeleteAgent -RequestedName $AgentName -AlreadyConfirmed:$Confirmar; break }
         { $_ -in @('alias', 'atajo') } { Invoke-AgentAlias -RequestedName $AgentName -RequestedAlias $AliasName; break }
         { $_ -in @('listar', 'list') } { Show-AgentList; break }
         { $_ -in @('modelos', 'models') } { Show-Models; break }
-        { $_ -in @('diagnostico', 'doctor') } { Show-Diagnostics; break }
+        { $_ -in @('diagnostico', 'doctor', 'diagnostics') } { Show-Diagnostics; break }
         { $_ -in @('ayuda', 'help', '--help', '-h') } { Show-Help; break }
         { $_ -in @('version', '--version') } { Write-Host (Get-HermesManagerVersion); break }
         default { throw "Comando desconocido: $Command. Usa 'hermes ayuda'." }

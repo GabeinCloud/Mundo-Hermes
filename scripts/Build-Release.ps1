@@ -29,7 +29,10 @@ $files = @(
     'GUIA-INSTALACION.md', 'SECURITY.md', 'CONTRIBUTING.md', 'CHANGELOG.md',
     'Instalar.cmd', 'Desinstalar.cmd', 'Activar alias globales.cmd',
     'Activar alias globales.ps1', 'Hermes Manager.cmd',
-    'hermes.cmd', 'HermesManager.ps1', 'settings.json'
+    'hermes.cmd', 'HermesManager.ps1', 'settings.json',
+    'Install (English).cmd', 'Uninstall (English).cmd',
+    'Activate global aliases (English).cmd',
+    'Hermes Manager (English).cmd', 'hermes-en.cmd'
 )
 foreach ($relative in $files) {
     $source = Join-Path $ProjectRoot $relative

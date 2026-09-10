@@ -4,11 +4,30 @@ param(
     [switch]$ChooseInstallPath,
     [switch]$NoPath,
     [switch]$NoShortcut,
-    [switch]$NoTests
+    [switch]$NoTests,
+    [ValidateSet('es', 'en')][string]$Language = 'es'
 )
 
 $ErrorActionPreference = 'Stop'
 $SourceRoot = [IO.Path]::GetFullPath((Split-Path -Parent $PSScriptRoot)).TrimEnd('\')
+. (Join-Path $SourceRoot 'src\HermesLocalization.ps1')
+Set-HermesLanguage -Language $Language
+
+function Write-Host {
+    param(
+        [Parameter(Position = 0)][object[]]$Object,
+        [switch]$NoNewline,
+        [Nullable[ConsoleColor]]$ForegroundColor,
+        [Nullable[ConsoleColor]]$BackgroundColor,
+        [string]$Separator = ' '
+    )
+    Write-HermesLocalizedHost -Object $Object -NoNewline:$NoNewline -ForegroundColor $ForegroundColor -BackgroundColor $BackgroundColor -Separator $Separator
+}
+
+function Read-Host {
+    param([string]$Prompt)
+    Read-HermesLocalizedHost -Prompt $Prompt
+}
 
 if (-not $env:OS -or $env:OS -ne 'Windows_NT') {
     throw 'Esta versión de Hermes Manager solo admite Windows.'
@@ -35,6 +54,9 @@ if ([string]::IsNullOrWhiteSpace($DestinationRoot) -or $DestinationRoot.Equals($
 
 $requiredSourceFiles = @(
     'Hermes Manager.cmd', 'hermes.cmd',
+    'Hermes Manager (English).cmd', 'hermes-en.cmd',
+    'Install (English).cmd', 'Uninstall (English).cmd',
+    'Activate global aliases (English).cmd',
     'HermesManager.ps1', 'settings.json', 'README.md', 'README.es.md',
     'LICENSE', 'NOTICE.md', 'CHANGELOG.md', 'SECURITY.md', 'CONTRIBUTING.md'
 )
@@ -67,7 +89,10 @@ if (Test-Path -LiteralPath $DestinationRoot) {
 
 $copyFiles = $requiredSourceFiles + @(
     'Instalar.cmd', 'Desinstalar.cmd', 'Activar alias globales.cmd',
-    'Activar alias globales.ps1', 'GUIA-INSTALACION.md', '.gitignore'
+    'Activar alias globales.ps1', 'GUIA-INSTALACION.md', '.gitignore',
+    'Install (English).cmd', 'Uninstall (English).cmd',
+    'Activate global aliases (English).cmd', 'Hermes Manager (English).cmd',
+    'hermes-en.cmd'
 )
 $copyDirectories = @('src', 'scripts', 'tests')
 
@@ -94,11 +119,14 @@ $version = Get-HermesManagerVersion
 $globalLauncher = @'
 @echo off
 setlocal
-call "%~dp0..\Hermes Manager.cmd" %*
+call "%~dp0..\__MANAGER_LAUNCHER__" %*
 exit /b %ERRORLEVEL%
 '@
+$managerLauncher = if ($Language -eq 'en') { 'Hermes Manager (English).cmd' } else { 'Hermes Manager.cmd' }
+$globalLauncher = $globalLauncher.Replace('__MANAGER_LAUNCHER__', $managerLauncher)
 $encoding = [Text.UTF8Encoding]::new($false)
-[IO.File]::WriteAllText((Join-Path $DestinationRoot 'bin\hermes-manager.cmd'), $globalLauncher.TrimStart() + "`r`n", $encoding)
+$globalCommand = if ($Language -eq 'en') { 'hermes-manager-en.cmd' } else { 'hermes-manager.cmd' }
+[IO.File]::WriteAllText((Join-Path $DestinationRoot "bin\$globalCommand"), $globalLauncher.TrimStart() + "`r`n", $encoding)
 
 if (-not $NoPath) {
     Install-HermesAliasPath -Root $DestinationRoot | Out-Null
@@ -107,12 +135,13 @@ if (-not $NoPath) {
 if (-not $NoShortcut) {
     $desktop = [Environment]::GetFolderPath('Desktop')
     if ($desktop) {
-        $shortcutPath = Join-Path $desktop 'Hermes Manager.lnk'
+        $shortcutName = if ($Language -eq 'en') { 'Hermes Manager (English).lnk' } else { 'Hermes Manager.lnk' }
+        $shortcutPath = Join-Path $desktop $shortcutName
         $shell = New-Object -ComObject WScript.Shell
         $shortcut = $shell.CreateShortcut($shortcutPath)
-        $shortcut.TargetPath = Join-Path $DestinationRoot 'Hermes Manager.cmd'
+        $shortcut.TargetPath = Join-Path $DestinationRoot $managerLauncher
         $shortcut.WorkingDirectory = $DestinationRoot
-        $shortcut.Description = 'Abrir Hermes Manager'
+        $shortcut.Description = if ($Language -eq 'en') { 'Open Hermes Manager' } else { 'Abrir Hermes Manager' }
         $shortcut.Save()
     }
 }
