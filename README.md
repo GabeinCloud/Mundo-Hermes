@@ -22,27 +22,27 @@ You do not need to install Python, Git, PowerShell 7 or Hermes directly on Windo
 
 ### From a GitHub Release
 
-1. Download `Hermes-Manager-Windows-<version>.zip` from **Releases**.
+1. Download `Hermes-Manager-Windows-<version>-English.zip` from **Releases**.
 2. Extract the ZIP.
-3. Double-click `Instalar.cmd`.
+3. Double-click `Install.cmd`.
 4. Press Enter to use the recommended folder or enter another installation folder.
 5. Wait for the checks to finish.
 6. Open **Hermes Manager** from the desktop shortcut.
 
-That is all. The ZIP contains the installer, scripts, configuration, documentation and manager tests. It does not contain Docker Desktop or the Hermes image: Docker downloads that image automatically when the first agent is configured or started.
+That is all. The ZIP contains the installer, manager files, configuration and English documentation. It does not contain Docker Desktop or the Hermes image: Docker downloads that image automatically when the first agent is configured or started.
 
 The recommended folder is `%LOCALAPPDATA%\HermesManager`, but you can choose another location during installation. Administrator permissions are not required if your user can write to the selected location. The installer adds that installation's `bin` folder to the user `PATH`.
 
 You do not need `git clone` to install or use Hermes Manager. The **Releases** page contains the package prepared for users. The **Source code** ZIP files shown by GitHub contain the repository source and are intended for development, not for the normal installation flow.
 
-The default files use Spanish prompts. English users can run `Install (English).cmd`; it installs the English shortcut **Hermes Manager (English)** and the `hermes-en.cmd` command. Use `Uninstall (English).cmd` for the English uninstall prompts.
+The English ZIP contains only the English user experience and documentation. The Spanish ZIP is published separately. The English installer creates the **Hermes Manager** shortcut and the `hermes-manager-en` terminal command; use `Uninstall.cmd` to uninstall.
 
 #### Optional download verification
 
 The Release also publishes a `.sha256` file. It is not required for installation, but it lets you verify manually that the downloaded ZIP is neither corrupted nor modified. It is published separately because a file cannot verify its own download.
 
 ```powershell
-$zip = '.\Hermes-Manager-Windows-<version>.zip'
+$zip = '.\Hermes-Manager-Windows-<version>-English.zip'
 $expected = ((Get-Content "$zip.sha256") -split '\s+')[0]
 $actual = (Get-FileHash -Algorithm SHA256 $zip).Hash.ToLowerInvariant()
 if ($actual -ne $expected) { throw 'The ZIP does not match the published checksum.' }
@@ -85,23 +85,23 @@ Do not publish or attach that folder to issues. Data, alias, log and trash direc
 
 Never commit or upload `agents/`, `bin/`, `logs/`, `trash/`, `.env`, `config.yaml` or `.hermes-manager-install.json`. These paths can contain credentials, conversations, logs or installation-specific data.
 
-See [GUIA-INSTALACION.md](GUIA-INSTALACION.md) for the complete step-by-step configuration, all generated files and instructions for pinning a specific image version or digest.
+See [INSTALLATION-GUIDE.md](INSTALLATION-GUIDE.md) for the complete step-by-step configuration, generated files, security model, updates and backups.
 
 ## Optional commands
 
 ```powershell
-hermes-manager
+hermes-manager-en
 # The following examples use the recommended folder:
-& "$env:LOCALAPPDATA\HermesManager\hermes.cmd" crear writer
-& "$env:LOCALAPPDATA\HermesManager\hermes.cmd" actualizar todos
+& "$env:LOCALAPPDATA\HermesManager\hermes-en.cmd" create writer
+& "$env:LOCALAPPDATA\HermesManager\hermes-en.cmd" update all
 ```
 
-The command names remain in Spanish. Run `hermes ayuda` to display all available commands.
+Run `hermes-en.cmd help` to display all available English commands.
 
 ## Updating
 
 - **Update agent** downloads or verifies the digest-pinned image and preserves its data. A new manager release may publish an updated digest.
-- To update Hermes Manager, run `Instalar.cmd` from a newer Release and select the same installation folder. The installer replaces only program files.
+- To update Hermes Manager, run `Install.cmd` from a newer English Release and select the same installation folder. The installer replaces only program files.
 
 ## Development
 
@@ -113,4 +113,4 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\scripts\Build-Release
 
 ## Security and license
 
-See [SECURITY.md](SECURITY.md), [NOTICE.md](NOTICE.md) and [LICENSE](LICENSE). Do not include credentials, agent configurations or logs in public reports.
+See [SECURITY.en.md](SECURITY.en.md), [NOTICE.en.md](NOTICE.en.md) and [LICENSE](LICENSE). Do not include credentials, agent configurations or logs in public reports.

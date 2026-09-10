@@ -22,7 +22,7 @@ No necesitas instalar Python, Git, PowerShell 7 ni Hermes directamente en Window
 
 ### Desde una Release de GitHub
 
-1. Descarga `Hermes-Manager-Windows-<versión>.zip` desde **Releases**.
+1. Descarga `Hermes-Manager-Windows-<versión>-Spanish.zip` desde **Releases**.
 2. Descomprime el ZIP.
 3. Haz doble clic en `Instalar.cmd`.
 4. Pulsa Intro para usar la carpeta recomendada o escribe otra carpeta de instalación.
@@ -35,14 +35,14 @@ La carpeta recomendada es `%LOCALAPPDATA%\HermesManager`, pero puedes elegir otr
 
 No necesitas ejecutar `git clone` para instalar o utilizar Hermes Manager. La página de **Releases** contiene el paquete preparado para usuarios. Los ZIP de **Source code** que muestra GitHub contienen el código fuente del repositorio y están destinados al desarrollo, no a la instalación normal.
 
-Los archivos predeterminados muestran los mensajes en español. Las personas que prefieran inglés pueden ejecutar `Install (English).cmd`; instalará el acceso directo **Hermes Manager (English)** y el comando `hermes-en.cmd`. Para desinstalar con mensajes en inglés, ejecuta `Uninstall (English).cmd`.
+La Release publica paquetes separados para español e inglés. El ZIP español contiene únicamente la experiencia y documentación para usuarios en español; el ZIP inglés utiliza nombres, menús, mensajes, archivos generados y documentación en inglés.
 
 #### Verificación opcional de la descarga
 
 La Release también publica un archivo `.sha256`. No es necesario para instalar, pero permite comprobar manualmente que el ZIP descargado no está dañado ni ha sido modificado. Se publica fuera del ZIP porque un archivo no puede verificar su propia descarga.
 
 ```powershell
-$zip = '.\Hermes-Manager-Windows-<versión>.zip'
+$zip = '.\Hermes-Manager-Windows-<versión>-Spanish.zip'
 $esperado = ((Get-Content "$zip.sha256") -split '\s+')[0]
 $actual = (Get-FileHash -Algorithm SHA256 $zip).Hash.ToLowerInvariant()
 if ($actual -ne $esperado) { throw 'El ZIP no coincide con el checksum publicado.' }

@@ -1,6 +1,6 @@
 ﻿Set-StrictMode -Version 2.0
 
-$script:ManagerVersion = '1.1.0'
+$script:ManagerVersion = '1.2.0'
 $script:DefaultImage = 'nousresearch/hermes-agent@sha256:41b9ed005cebcb3d3fb45206ce27cfb0356ba99b190c0924bab5141b15ad8e71'
 
 function Get-HermesRoot {
@@ -179,7 +179,20 @@ networks:
     Write-Utf8File -Path (Join-Path $agentPath 'compose.yaml') -Content ($compose.TrimStart() + "`n")
 
     $safeTitle = $Name.Trim()
-    $soul = @"
+    $soul = if ($Language -eq 'en') { @"
+# $safeTitle
+
+## Purpose
+
+$($Purpose.Trim())
+
+## Working style
+
+- Ask for missing information before acting.
+- Briefly explain what you are going to do.
+- Keep data only inside `/opt/data`.
+- Do not claim that an operation finished until it has been verified.
+"@ } else { @"
 # $safeTitle
 
 ## Función
@@ -192,14 +205,18 @@ $($Purpose.Trim())
 - Explica de forma breve qué va a hacer.
 - Conserva sus datos únicamente dentro de `/opt/data`.
 - No afirma que una operación terminó hasta haberla comprobado.
-"@
+"@ }
     Write-Utf8File -Path (Join-Path $agentPath 'data\SOUL.md') -Content ($soul.TrimStart() + "`n")
 
-    $environment = @'
+    $environment = if ($Language -eq 'en') { @'
+# This file remains inside the agent folder.
+# The official Hermes assistant will add the required configuration here or in config.yaml.
+OLLAMA_HOST=http://host.docker.internal:11434
+'@ } else { @'
 # Este archivo permanece dentro de la carpeta del agente.
 # El asistente oficial de Hermes añadirá aquí o en config.yaml la configuración necesaria.
 OLLAMA_HOST=http://host.docker.internal:11434
-'@
+'@ }
     Write-Utf8File -Path (Join-Path $agentPath 'data\.env') -Content ($environment.TrimStart() + "`n")
 
     $metadata = [ordered]@{
@@ -245,7 +262,8 @@ function Get-HermesAgents {
                 CreatedAt = [string]$metadata.created_at
             }
         } catch {
-            Write-Warning "No se pudo leer $metadataPath"
+            if ($env:HERMES_MANAGER_LANGUAGE -eq 'en') { Write-Warning "Could not read $metadataPath" }
+            else { Write-Warning "No se pudo leer $metadataPath" }
         }
     }
     return @($result)
@@ -364,12 +382,13 @@ function New-HermesAgentAlias {
 
     $metadataPath = Join-Path $agent.Path 'agent.json'
     $metadata = Get-Content -Raw -Encoding UTF8 -LiteralPath $metadataPath | ConvertFrom-Json
-    $launcherName = if ($metadata.language -eq 'en') { 'hermes-en.cmd' } else { 'hermes.cmd' }
+    $launcherName = if ($metadata.language -eq 'en' -and (Test-Path -LiteralPath (Join-Path $resolvedRoot 'hermes-en.cmd'))) { 'hermes-en.cmd' } else { 'hermes.cmd' }
+    $openCommand = if ($metadata.language -eq 'en') { 'chat' } else { 'abrir' }
     $launcher = @"
 @echo off
 rem HERMES_MANAGER_ALIAS=$($agent.Name)
 setlocal
-call "%~dp0..\$launcherName" abrir $($agent.Name)
+call "%~dp0..\$launcherName" $openCommand $($agent.Name)
 exit /b %ERRORLEVEL%
 "@
     Write-Utf8File -Path $aliasPath -Content ($launcher.TrimStart() + "`r`n")

@@ -12,6 +12,7 @@ $Root = $PSScriptRoot
 Import-Module (Join-Path $Root 'src\HermesManager.psm1') -Force
 . (Join-Path $Root 'src\HermesLocalization.ps1')
 Set-HermesLanguage -Language $Language
+$env:HERMES_MANAGER_LANGUAGE = $Language
 
 function Write-Host {
     param(
@@ -27,6 +28,14 @@ function Write-Host {
 function Read-Host {
     param([string]$Prompt)
     Read-HermesLocalizedHost -Prompt $Prompt
+}
+
+function Write-LocalizedManagerLog {
+    param(
+        [Parameter(Mandatory)][string]$Message,
+        [ValidateSet('INFO', 'WARN', 'ERROR')][string]$Level = 'INFO'
+    )
+    Write-HermesManagerLog -Root $Root -Level $Level -Message (ConvertTo-HermesLocalizedText -Text $Message)
 }
 Initialize-HermesLayout -Root $Root | Out-Null
 
@@ -45,12 +54,24 @@ function Show-Banner {
 
 function Wait-ForUser {
     Write-Host
-    [void](Read-Host 'Pulsa Intro para continuar')
+    [void](Read-Host $(if ($Language -eq 'en') { 'Press Enter to continue' } else { 'Pulsa Intro para continuar' }))
 }
 
 function Read-YesNo {
     param([Parameter(Mandatory)][string]$Prompt, [bool]$Default = $true)
-    $suffix = if ($Default) { '[S/n]' } else { '[s/N]' }
+    $suffix = if ($Language -eq 'en') {
+        if ($Default) { '[Y/n]' } else { '[y/N]' }
+    } else {
+        if ($Default) { '[S/n]' } else { '[s/N]' }
+    }
+    if ($Language -eq 'en') {
+        if ($Prompt -match 'configurar ahora') { $Prompt = 'Do you want to configure the provider and model now?' }
+        elseif ($Prompt -match 'iniciar el agente') { $Prompt = 'Do you want to start the agent now?' }
+        elseif ($Prompt -match 'papelera de Hermes') {
+            $agentName = [regex]::Match($Prompt, "'([^']+)'").Groups[1].Value
+            $Prompt = "Move '$agentName' to the Hermes trash?"
+        }
+    }
     while ($true) {
         $answer = (Read-Host "$Prompt $suffix").Trim().ToLowerInvariant()
         if (-not $answer) { return $Default }
@@ -69,7 +90,7 @@ function Select-Agent {
     for ($index = 0; $index -lt $agents.Count; $index++) {
         Write-Host ("  {0}. {1} ({2})" -f ($index + 1), $agents[$index].DisplayName, $agents[$index].Name)
     }
-    $selection = Read-Host 'Número o nombre'
+    $selection = Read-Host $(if ($Language -eq 'en') { 'Number or name' } else { 'Número o nombre' })
     $number = 0
     if ([int]::TryParse($selection, [ref]$number) -and $number -ge 1 -and $number -le $agents.Count) {
         return $agents[$number - 1].Name
@@ -86,18 +107,28 @@ function Show-AgentList {
     $dockerReady = Test-HermesDockerEngine
     $rows = foreach ($agent in $agents) {
         $status = if (-not $dockerReady) {
-            'SIN COMPROBAR'
+            if ($Language -eq 'en') { 'NOT CHECKED' } else { 'SIN COMPROBAR' }
         } elseif (Test-HermesAgentRunning -Name $agent.Name -Root $Root) {
-            'EN MARCHA'
+            if ($Language -eq 'en') { 'RUNNING' } else { 'EN MARCHA' }
         } else {
-            'DETENIDO'
+            if ($Language -eq 'en') { 'STOPPED' } else { 'DETENIDO' }
         }
-        [pscustomobject]@{
-            Nombre = $agent.DisplayName
-            Id = $agent.Name
-            Alias = $(if ($agent.TerminalAlias) { $agent.TerminalAlias } else { '-' })
-            Estado = $status
-            Funcion = $agent.Purpose
+        if ($Language -eq 'en') {
+            [pscustomobject]@{
+                Name = $agent.DisplayName
+                Id = $agent.Name
+                Alias = $(if ($agent.TerminalAlias) { $agent.TerminalAlias } else { '-' })
+                Status = $status
+                Purpose = $agent.Purpose
+            }
+        } else {
+            [pscustomobject]@{
+                Nombre = $agent.DisplayName
+                Id = $agent.Name
+                Alias = $(if ($agent.TerminalAlias) { $agent.TerminalAlias } else { '-' })
+                Estado = $status
+                Funcion = $agent.Purpose
+            }
         }
     }
     $rows | Format-Table -AutoSize -Wrap
@@ -107,32 +138,32 @@ function New-AgentInteractive {
     param([string]$RequestedName)
     Show-Banner
     Write-Host 'CREAR AGENTE' -ForegroundColor Green
-    Write-Host 'El gestor guardará su identidad, configuración y datos en una carpeta propia.'
+    Write-Host $(if ($Language -eq 'en') { 'The manager will keep its identity, configuration and data in its own folder.' } else { 'El gestor guardará su identidad, configuración y datos en una carpeta propia.' })
     Write-Host
     $displayName = $RequestedName
-    if (-not $displayName) { $displayName = Read-Host 'Nombre del agente (ejemplo: publisher)' }
-    $purpose = Read-Host '¿Para qué servirá?'
+    if (-not $displayName) { $displayName = Read-Host $(if ($Language -eq 'en') { 'Agent name (example: publisher)' } else { 'Nombre del agente (ejemplo: publisher)' }) }
+    $purpose = Read-Host $(if ($Language -eq 'en') { 'What will it be used for?' } else { '¿Para qué servirá?' })
     $agent = New-HermesAgentFiles -Name $displayName -Purpose $purpose -Root $Root -Language $Language
-    Write-HermesManagerLog -Root $Root -Message "Agente creado: $($agent.Name)"
+    Write-LocalizedManagerLog -Message "Agente creado: $($agent.Name)"
     Write-Host
     Write-Host "Agente '$($agent.DisplayName)' creado." -ForegroundColor Green
     Write-Host "Datos: $($agent.Path)"
 
-    $aliasName = Read-Host "Alias para abrirlo desde cualquier terminal [$($agent.Name)]"
+    $aliasName = Read-Host $(if ($Language -eq 'en') { "Alias to open it from any terminal [$($agent.Name)]" } else { "Alias para abrirlo desde cualquier terminal [$($agent.Name)]" })
     if (-not $aliasName) { $aliasName = $agent.Name }
     $aliasResult = New-HermesAgentAlias -Name $agent.Name -Alias $aliasName -Root $Root
-    Write-HermesManagerLog -Root $Root -Message "Alias creado: $($aliasResult.Alias) -> $($agent.Name)"
+    Write-LocalizedManagerLog -Message "Alias creado: $($aliasResult.Alias) -> $($agent.Name)"
     Write-Host "Alias creado: escribe '$($aliasResult.Alias)' en una terminal nueva." -ForegroundColor Green
 
     if (Read-YesNo -Prompt '¿Quieres configurar ahora el proveedor y el modelo?' -Default $true) {
         Write-Host
-        Write-Host 'Hermes abrirá su asistente oficial. Las respuestas quedarán dentro de la carpeta del agente.' -ForegroundColor Cyan
+        Write-Host $(if ($Language -eq 'en') { 'Hermes will open its official setup assistant. Answers will remain inside the agent folder.' } else { 'Hermes abrirá su asistente oficial. Las respuestas quedarán dentro de la carpeta del agente.' }) -ForegroundColor Cyan
         Initialize-HermesAgentConfiguration -Name $agent.Name -Root $Root
-        Write-HermesManagerLog -Root $Root -Message "Configuración ejecutada: $($agent.Name)"
+        Write-LocalizedManagerLog -Message "Configuración ejecutada: $($agent.Name)"
     }
     if (Read-YesNo -Prompt '¿Quieres iniciar el agente ahora?' -Default $true) {
         Start-HermesAgent -Name $agent.Name -Root $Root
-        Write-HermesManagerLog -Root $Root -Message "Agente iniciado: $($agent.Name)"
+        Write-LocalizedManagerLog -Message "Agente iniciado: $($agent.Name)"
         Write-Host "'$($agent.Name)' está en marcha." -ForegroundColor Green
     }
 }
@@ -141,14 +172,14 @@ function Invoke-ConfigureAgent {
     param([string]$RequestedName)
     $name = Select-Agent -RequestedName $RequestedName
     Initialize-HermesAgentConfiguration -Name $name -Root $Root
-    Write-HermesManagerLog -Root $Root -Message "Configuración ejecutada: $name"
+    Write-LocalizedManagerLog -Message "Configuración ejecutada: $name"
 }
 
 function Invoke-StartAgent {
     param([string]$RequestedName)
     $name = Select-Agent -RequestedName $RequestedName
     Start-HermesAgent -Name $name -Root $Root
-    Write-HermesManagerLog -Root $Root -Message "Agente iniciado: $name"
+    Write-LocalizedManagerLog -Message "Agente iniciado: $name"
     Write-Host "'$name' está en marcha." -ForegroundColor Green
 }
 
@@ -163,7 +194,7 @@ function Invoke-StopAgent {
     param([string]$RequestedName)
     $name = Select-Agent -RequestedName $RequestedName
     Stop-HermesAgent -Name $name -Root $Root
-    Write-HermesManagerLog -Root $Root -Message "Agente detenido: $name"
+    Write-LocalizedManagerLog -Message "Agente detenido: $name"
     Write-Host "'$name' está detenido." -ForegroundColor Green
 }
 
@@ -175,14 +206,14 @@ function Invoke-UpdateAgent {
         foreach ($agent in $agents) {
             Write-Host "Actualizando $($agent.Name)..." -ForegroundColor Cyan
             Update-HermesAgent -Name $agent.Name -Root $Root
-            Write-HermesManagerLog -Root $Root -Message "Agente actualizado: $($agent.Name)"
+            Write-LocalizedManagerLog -Message "Agente actualizado: $($agent.Name)"
         }
         Write-Host 'Todos los agentes están actualizados.' -ForegroundColor Green
         return
     }
     $name = Select-Agent -RequestedName $RequestedName
     Update-HermesAgent -Name $name -Root $Root
-    Write-HermesManagerLog -Root $Root -Message "Agente actualizado: $name"
+    Write-LocalizedManagerLog -Message "Agente actualizado: $name"
     Write-Host "'$name' está actualizado." -ForegroundColor Green
 }
 
@@ -194,7 +225,7 @@ function Invoke-DeleteAgent {
         return
     }
     $destination = Remove-HermesAgent -Name $name -Root $Root
-    Write-HermesManagerLog -Root $Root -Message "Agente movido a la papelera: $name"
+    Write-LocalizedManagerLog -Message "Agente movido a la papelera: $name"
     Write-Host "Agente retirado. Copia recuperable: $destination" -ForegroundColor Green
 }
 
@@ -205,11 +236,11 @@ function Invoke-AgentAlias {
     $aliasName = $RequestedAlias
     if (-not $aliasName) {
         $suggested = if ($agent.TerminalAlias) { $agent.TerminalAlias } else { $agent.Name }
-        $aliasName = Read-Host "Alias corto [$suggested]"
+        $aliasName = Read-Host $(if ($Language -eq 'en') { "Short alias [$suggested]" } else { "Alias corto [$suggested]" })
         if (-not $aliasName) { $aliasName = $suggested }
     }
     $result = New-HermesAgentAlias -Name $name -Alias $aliasName -Root $Root
-    Write-HermesManagerLog -Root $Root -Message "Alias creado: $($result.Alias) -> $name"
+    Write-LocalizedManagerLog -Message "Alias creado: $($result.Alias) -> $name"
     Write-Host "Alias listo: $($result.Alias)" -ForegroundColor Green
     if ($result.UserPathAdded) {
         Write-Host 'Abre una terminal nueva para utilizarlo desde cualquier carpeta.' -ForegroundColor Yellow
@@ -293,20 +324,37 @@ function Show-Menu {
         $agents = @(Get-HermesAgents -Root $Root)
         Write-Host ("Agentes configurados: {0}" -f $agents.Count)
         Write-Host
-        Write-Host '  1. Crear agente'
-        Write-Host '  2. Abrir conversación'
-        Write-Host '  3. Iniciar agente'
-        Write-Host '  4. Detener agente'
-        Write-Host '  5. Configurar proveedor/modelo'
-        Write-Host '  6. Actualizar agente'
-        Write-Host '  7. Listar agentes'
-        Write-Host '  8. Modelos locales'
-        Write-Host '  9. Eliminar agente'
-        Write-Host '  A. Crear o cambiar alias de terminal'
-        Write-Host '  D. Diagnóstico'
-        Write-Host '  0. Salir'
+        if ($Language -eq 'en') {
+            Write-Host @'
+  1. Create agent
+  2. Open conversation
+  3. Start agent
+  4. Stop agent
+  5. Configure provider/model
+  6. Update agent
+  7. List agents
+  8. Local models
+  9. Remove agent
+  A. Create or change terminal alias
+  D. Diagnostics
+  0. Exit
+'@
+        } else {
+            Write-Host '  1. Crear agente'
+            Write-Host '  2. Abrir conversación'
+            Write-Host '  3. Iniciar agente'
+            Write-Host '  4. Detener agente'
+            Write-Host '  5. Configurar proveedor/modelo'
+            Write-Host '  6. Actualizar agente'
+            Write-Host '  7. Listar agentes'
+            Write-Host '  8. Modelos locales'
+            Write-Host '  9. Eliminar agente'
+            Write-Host '  A. Crear o cambiar alias de terminal'
+            Write-Host '  D. Diagnóstico'
+            Write-Host '  0. Salir'
+        }
         Write-Host
-        $choice = (Read-Host 'Elige una opción').Trim().ToLowerInvariant()
+        $choice = (Read-Host $(if ($Language -eq 'en') { 'Choose an option' } else { 'Elige una opción' })).Trim().ToLowerInvariant()
         try {
             switch ($choice) {
                 '1' { New-AgentInteractive; Wait-ForUser }
@@ -324,9 +372,9 @@ function Show-Menu {
                 default { Write-Host 'Opción no válida.' -ForegroundColor Yellow; Start-Sleep -Seconds 1 }
             }
         } catch {
-            Write-HermesManagerLog -Root $Root -Level ERROR -Message $_.Exception.Message
+            Write-LocalizedManagerLog -Level ERROR -Message $_.Exception.Message
             Write-Host
-            Write-Host ('ERROR: ' + $_.Exception.Message) -ForegroundColor Red
+            Write-Host ('ERROR: ' + (ConvertTo-HermesLocalizedText -Text $_.Exception.Message)) -ForegroundColor Red
             Wait-ForUser
         }
     }
@@ -352,7 +400,7 @@ try {
         default { throw "Comando desconocido: $Command. Usa 'hermes ayuda'." }
     }
 } catch {
-    Write-HermesManagerLog -Root $Root -Level ERROR -Message $_.Exception.Message
-    Write-Host ('ERROR: ' + $_.Exception.Message) -ForegroundColor Red
+    Write-LocalizedManagerLog -Level ERROR -Message $_.Exception.Message
+    Write-Host ('ERROR: ' + (ConvertTo-HermesLocalizedText -Text $_.Exception.Message)) -ForegroundColor Red
     exit 1
 }

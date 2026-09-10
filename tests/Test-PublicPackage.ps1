@@ -22,6 +22,27 @@ function Assert-Equal {
     Assert-True -Condition ($Actual -eq $Expected) -Name "$Name (esperado='$Expected', real='$Actual')"
 }
 
+function Invoke-CapturedPowerShell {
+    param([Parameter(Mandatory)][string]$Arguments, [string[]]$InputLines = @())
+
+    $startInfo = [Diagnostics.ProcessStartInfo]::new()
+    $startInfo.FileName = 'powershell.exe'
+    $startInfo.Arguments = $Arguments
+    $startInfo.UseShellExecute = $false
+    $startInfo.CreateNoWindow = $true
+    $startInfo.RedirectStandardInput = $true
+    $startInfo.RedirectStandardOutput = $true
+    $startInfo.RedirectStandardError = $true
+    $process = [Diagnostics.Process]::new()
+    $process.StartInfo = $startInfo
+    [void]$process.Start()
+    foreach ($line in $InputLines) { $process.StandardInput.WriteLine($line) }
+    $process.StandardInput.Close()
+    $output = $process.StandardOutput.ReadToEnd() + $process.StandardError.ReadToEnd()
+    $process.WaitForExit()
+    return [pscustomobject]@{ Output = $output; ExitCode = $process.ExitCode }
+}
+
 $requiredFiles = @(
     'Instalar.cmd', 'Desinstalar.cmd', 'Hermes Manager.cmd', 'hermes.cmd',
     'Install (English).cmd', 'Uninstall (English).cmd',
@@ -29,6 +50,7 @@ $requiredFiles = @(
     'Activate global aliases (English).cmd',
     'HermesManager.ps1', 'settings.json', 'README.md', 'README.es.md',
     'GUIA-INSTALACION.md', 'LICENSE', 'NOTICE.md', 'SECURITY.md',
+    'INSTALLATION-GUIDE.md', 'NOTICE.en.md', 'SECURITY.en.md',
     'CONTRIBUTING.md', 'CHANGELOG.md', 'src\HermesManager.psm1',
     'scripts\Install-HermesManager.ps1', 'scripts\Uninstall-HermesManager.ps1',
     'scripts\Build-Release.ps1', 'src\HermesLocalization.ps1', '.github\workflows\test.yml'
@@ -71,6 +93,7 @@ $TempRoot = Join-Path ([IO.Path]::GetTempPath()) ('hermes-manager-public-test-' 
 $InstallRoot = Join-Path $TempRoot 'installed'
 $InteractiveInstallRoot = Join-Path $TempRoot 'installed in chosen folder'
 $ReleaseInstallRoot = Join-Path $TempRoot 'installed-from-release'
+$EnglishReleaseInstallRoot = Join-Path $TempRoot 'installed-from-english-release'
 $ReleaseRoot = Join-Path $TempRoot 'release'
 $ExpandedRoot = Join-Path $TempRoot 'expanded'
 New-Item -ItemType Directory -Path $TempRoot -Force | Out-Null
@@ -129,11 +152,24 @@ try {
     $builder = Join-Path $ProjectRoot 'scripts\Build-Release.ps1'
     & powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File $builder -OutputDirectory $ReleaseRoot
     if ($LASTEXITCODE -ne 0) { throw "El generador de Release terminó con código $LASTEXITCODE" }
-    $zip = Get-ChildItem -LiteralPath $ReleaseRoot -Filter '*.zip' -File | Select-Object -First 1
-    Assert-True ($null -ne $zip) 'Genera ZIP de Release'
-    Assert-True (Test-Path -LiteralPath ($zip.FullName + '.sha256')) 'Genera checksum SHA-256'
+    $zips = @(Get-ChildItem -LiteralPath $ReleaseRoot -Filter '*.zip' -File)
+    Assert-Equal $zips.Count 2 'Genera los ZIP de Release en español e inglés'
+    foreach ($zip in $zips) {
+        Assert-True (Test-Path -LiteralPath ($zip.FullName + '.sha256')) "Genera checksum SHA-256 para $($zip.Name)"
+        $expectedHash = (Get-Content -Raw -LiteralPath ($zip.FullName + '.sha256')).Split(' ')[0].Trim()
+        $actualHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $zip.FullName).Hash.ToLowerInvariant()
+        Assert-Equal $actualHash $expectedHash "Checksum publicado coincide: $($zip.Name)"
+    }
 
-    Expand-Archive -LiteralPath $zip.FullName -DestinationPath $ExpandedRoot
+    $spanishZip = @($zips | Where-Object Name -like '*-Spanish.zip')[0]
+    $englishZip = @($zips | Where-Object Name -like '*-English.zip')[0]
+    Assert-True ($null -ne $spanishZip) 'Genera paquete español'
+    Assert-True ($null -ne $englishZip) 'Genera paquete inglés'
+
+    $spanishExpandedRoot = Join-Path $ExpandedRoot 'Spanish'
+    $englishExpandedRoot = Join-Path $ExpandedRoot 'English'
+    Expand-Archive -LiteralPath $spanishZip.FullName -DestinationPath $spanishExpandedRoot
+    Expand-Archive -LiteralPath $englishZip.FullName -DestinationPath $englishExpandedRoot
     $entries = @(Get-ChildItem -Force -Recurse -LiteralPath $ExpandedRoot)
     $forbiddenNames = @('agents', 'bin', 'logs', 'trash', '.git', '.env', 'config.yaml', '.hermes-manager-install.json')
     foreach ($name in $forbiddenNames) {
@@ -144,27 +180,64 @@ try {
         -not $_.PSIsContainer -and ($_.Name -match '(?i)\.(?:tar|tar\.gz|tgz|img|vhd|vhdx|qcow2)$' -or $_.Name -eq 'oci-layout')
     })
     Assert-Equal $releaseImagePayloads.Count 0 'Release sin imágenes ni exportaciones de contenedores'
-    Assert-True (@($entries | Where-Object { $_.Name -eq 'Instalar.cmd' }).Count -eq 1) 'Release contiene instalador'
-    Assert-True (@($entries | Where-Object { $_.Name -eq 'Install (English).cmd' }).Count -eq 1) 'Release contiene instalador en ingles'
-    Assert-True (@($entries | Where-Object { $_.Name -eq 'Hermes Manager (English).cmd' }).Count -eq 1) 'Release contiene gestor en ingles'
-    Assert-True (@($entries | Where-Object { $_.Name -eq 'hermes-en.cmd' }).Count -eq 1) 'Release contiene comando ingles'
-    Assert-True (@($entries | Where-Object { $_.Name -eq 'README.md' }).Count -eq 1) 'Release contiene README'
-    Assert-True (@($entries | Where-Object { $_.Name -eq 'README.es.md' }).Count -eq 1) 'Release contiene README en español'
+    $spanishPackageRoot = Get-ChildItem -LiteralPath $spanishExpandedRoot -Directory | Select-Object -First 1
+    $englishPackageRoot = Get-ChildItem -LiteralPath $englishExpandedRoot -Directory | Select-Object -First 1
+    Assert-True (Test-Path -LiteralPath (Join-Path $spanishPackageRoot.FullName 'Instalar.cmd')) 'Paquete español contiene Instalar.cmd'
+    Assert-True (-not (Test-Path -LiteralPath (Join-Path $spanishPackageRoot.FullName 'Install.cmd'))) 'Paquete español excluye Install.cmd'
+    Assert-True (Test-Path -LiteralPath (Join-Path $englishPackageRoot.FullName 'Install.cmd')) 'Paquete inglés contiene Install.cmd'
+    Assert-True (Test-Path -LiteralPath (Join-Path $englishPackageRoot.FullName 'INSTALLATION-GUIDE.md')) 'Paquete inglés contiene guía inglesa'
+    Assert-True (-not (Test-Path -LiteralPath (Join-Path $englishPackageRoot.FullName 'Instalar.cmd'))) 'Paquete inglés excluye Instalar.cmd'
+    Assert-True (-not (Test-Path -LiteralPath (Join-Path $englishPackageRoot.FullName 'README.es.md'))) 'Paquete inglés excluye README español'
+    Assert-True (-not (Test-Path -LiteralPath (Join-Path $englishPackageRoot.FullName 'GUIA-INSTALACION.md'))) 'Paquete inglés excluye guía española'
+    Assert-True (-not (Test-Path -LiteralPath (Join-Path $englishPackageRoot.FullName 'tests'))) 'Paquete inglés excluye pruebas españolas'
 
-    $releasePackageRoot = Get-ChildItem -LiteralPath $ExpandedRoot -Directory | Where-Object {
-        $_.Name -like 'Hermes-Manager-Windows-*'
-    } | Select-Object -First 1
-    Assert-True ($null -ne $releasePackageRoot) 'Release contiene una raíz versionada'
-    if ($releasePackageRoot) {
-        $releaseInstaller = Join-Path $releasePackageRoot.FullName 'scripts\Install-HermesManager.ps1'
-        & powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File $releaseInstaller -InstallPath $ReleaseInstallRoot -NoPath -NoShortcut -NoTests
+    if ($spanishPackageRoot) {
+        $releaseInstaller = Join-Path $spanishPackageRoot.FullName 'scripts\Install-HermesManager.ps1'
+        & powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File $releaseInstaller -InstallPath $ReleaseInstallRoot -Language es -NoPath -NoShortcut -NoTests
         if ($LASTEXITCODE -ne 0) { throw "La instalación desde el ZIP terminó con código $LASTEXITCODE" }
-        Assert-True (Test-Path -LiteralPath (Join-Path $ReleaseInstallRoot '.hermes-manager-install.json')) 'El ZIP publicado se instala correctamente'
+        Assert-True (Test-Path -LiteralPath (Join-Path $ReleaseInstallRoot '.hermes-manager-install.json')) 'El ZIP español se instala correctamente'
     }
+    if ($englishPackageRoot) {
+        $releaseInstaller = Join-Path $englishPackageRoot.FullName 'scripts\Install-HermesManager.ps1'
+        $englishOutput = @(& powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File $releaseInstaller -InstallPath $EnglishReleaseInstallRoot -Language en -NoPath -NoShortcut -NoTests 2>&1)
+        if ($LASTEXITCODE -ne 0) { throw "La instalación desde el ZIP inglés terminó con código $LASTEXITCODE" }
+        Assert-True (Test-Path -LiteralPath (Join-Path $EnglishReleaseInstallRoot '.hermes-manager-install.json')) 'El ZIP inglés se instala correctamente'
+        Assert-True (($englishOutput -join "`n") -match 'INSTALLED SUCCESSFULLY') 'Instalador inglés muestra confirmación en inglés'
+        Assert-True (($englishOutput -join "`n") -notmatch 'INSTALADO|Versión|Carpeta|También|Pulsa|Escribe') 'Instalador inglés no muestra mensajes españoles'
 
-    $expectedHash = (Get-Content -Raw -LiteralPath ($zip.FullName + '.sha256')).Split(' ')[0].Trim()
-    $actualHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $zip.FullName).Hash.ToLowerInvariant()
-    Assert-Equal $actualHash $expectedHash 'Checksum publicado coincide con el ZIP'
+        $managerScript = Join-Path $EnglishReleaseInstallRoot 'HermesManager.ps1'
+        $englishMenuResult = Invoke-CapturedPowerShell -Arguments "-NoLogo -NoProfile -ExecutionPolicy Bypass -File `"$managerScript`" menu -Language en" -InputLines @('0')
+        $englishMenu = $englishMenuResult.Output
+        Assert-Equal $englishMenuResult.ExitCode 0 'Menú inglés termina correctamente'
+        Assert-True ($englishMenu -match 'Create agent' -and $englishMenu -match 'Open conversation' -and $englishMenu -match 'Diagnostics' -and $englishMenu -match 'Exit') 'Menú inglés muestra todas sus opciones en inglés'
+        Assert-True ($englishMenu -notmatch 'Crear agente|Abrir conversación|Elige una opción|Diagnóstico|Salir') 'Menú inglés no muestra opciones españolas'
+
+        $englishError = @(& powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File (Join-Path $EnglishReleaseInstallRoot 'HermesManager.ps1') start missing-agent -Language en 2>&1) -join "`n"
+        Assert-True ($englishError -match "Agent 'missing-agent' does not exist") 'Errores del gestor inglés están traducidos'
+
+        Import-Module (Join-Path $EnglishReleaseInstallRoot 'src\HermesManager.psm1') -Force
+        New-HermesAgentFiles -Name 'Writer' -Purpose 'Draft articles.' -Root $EnglishReleaseInstallRoot -Language en | Out-Null
+        New-HermesAgentAlias -Name 'writer' -Alias 'writer' -Root $EnglishReleaseInstallRoot -SkipPathRegistration | Out-Null
+        $englishSoul = Get-Content -Raw -Encoding UTF8 -LiteralPath (Join-Path $EnglishReleaseInstallRoot 'agents\writer\data\SOUL.md')
+        $englishEnvironment = Get-Content -Raw -Encoding UTF8 -LiteralPath (Join-Path $EnglishReleaseInstallRoot 'agents\writer\data\.env')
+        $englishAlias = Get-Content -Raw -Encoding UTF8 -LiteralPath (Join-Path $EnglishReleaseInstallRoot 'bin\writer.cmd')
+        Assert-True ($englishSoul -match '## Purpose' -and $englishSoul -match '## Working style') 'Agentes ingleses generan SOUL.md en inglés'
+        Assert-True ($englishEnvironment -match 'This file remains inside the agent folder') 'Agentes ingleses generan comentarios de entorno en inglés'
+        Assert-True ($englishAlias -match 'hermes-en\.cmd" chat writer') 'Alias inglés utiliza comando inglés'
+
+        $englishUninstaller = Join-Path $EnglishReleaseInstallRoot 'scripts\Uninstall-HermesManager.ps1'
+        $englishUninstallResult = Invoke-CapturedPowerShell -Arguments "-NoLogo -NoProfile -ExecutionPolicy Bypass -File `"$englishUninstaller`" -Language en" -InputLines @('CANCEL')
+        Assert-Equal $englishUninstallResult.ExitCode 0 'Desinstalador inglés permite cancelar'
+        Assert-True ($englishUninstallResult.Output -match 'Operation cancelled') 'Desinstalador inglés muestra resultado en inglés'
+        Assert-True ($englishUninstallResult.Output -notmatch 'Operación|carpeta|agente|datos|Escribe') 'Desinstalador inglés no muestra mensajes españoles'
+
+        $englishUserFiles = @('README.md', 'INSTALLATION-GUIDE.md', 'SECURITY.en.md', 'NOTICE.en.md',
+            'Install.cmd', 'Uninstall.cmd', 'Hermes Manager.cmd', 'Activate global aliases.cmd', 'Activate global aliases.ps1')
+        $englishUserText = ($englishUserFiles | ForEach-Object {
+            Get-Content -Raw -Encoding UTF8 -LiteralPath (Join-Path $englishPackageRoot.FullName $_)
+        }) -join "`n"
+        Assert-True ($englishUserText -notmatch 'Instalar\.cmd|Desinstalar\.cmd|Abrir conversación|Crear agente|Elige una opción|GUIA-INSTALACION|README\.es') 'Archivos de usuario ingleses no remiten a la variante española'
+    }
 } finally {
     $resolvedTemp = [IO.Path]::GetFullPath($TempRoot)
     if ($resolvedTemp.StartsWith([IO.Path]::GetFullPath([IO.Path]::GetTempPath()), [StringComparison]::OrdinalIgnoreCase) -and

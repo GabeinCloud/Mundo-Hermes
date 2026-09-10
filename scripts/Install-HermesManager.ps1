@@ -12,6 +12,7 @@ $ErrorActionPreference = 'Stop'
 $SourceRoot = [IO.Path]::GetFullPath((Split-Path -Parent $PSScriptRoot)).TrimEnd('\')
 . (Join-Path $SourceRoot 'src\HermesLocalization.ps1')
 Set-HermesLanguage -Language $Language
+$env:HERMES_MANAGER_LANGUAGE = $Language
 
 function Write-Host {
     param(
@@ -29,8 +30,13 @@ function Read-Host {
     Read-HermesLocalizedHost -Prompt $Prompt
 }
 
+function Stop-HermesInstallation {
+    param([Parameter(Mandatory)][string]$Message)
+    throw (ConvertTo-HermesLocalizedText -Text $Message)
+}
+
 if (-not $env:OS -or $env:OS -ne 'Windows_NT') {
-    throw 'Esta versión de Hermes Manager solo admite Windows.'
+    Stop-HermesInstallation 'Esta versión de Hermes Manager solo admite Windows.'
 }
 if ($ChooseInstallPath) {
     Write-Host 'CARPETA DE INSTALACIÓN' -ForegroundColor Cyan
@@ -49,20 +55,26 @@ if (-not $DestinationRoot.Equals($destinationPathRoot, [StringComparison]::Ordin
 }
 
 if ([string]::IsNullOrWhiteSpace($DestinationRoot) -or $DestinationRoot.Equals($destinationPathRoot, [StringComparison]::OrdinalIgnoreCase)) {
-    throw "Ruta de instalación no válida: $DestinationRoot"
+    Stop-HermesInstallation "Ruta de instalación no válida: $DestinationRoot"
 }
 
 $requiredSourceFiles = @(
-    'Hermes Manager.cmd', 'hermes.cmd',
-    'Hermes Manager (English).cmd', 'hermes-en.cmd',
-    'Install (English).cmd', 'Uninstall (English).cmd',
-    'Activate global aliases (English).cmd',
-    'HermesManager.ps1', 'settings.json', 'README.md', 'README.es.md',
-    'LICENSE', 'NOTICE.md', 'CHANGELOG.md', 'SECURITY.md', 'CONTRIBUTING.md'
+    'HermesManager.ps1', 'settings.json', 'README.md', 'LICENSE',
+    'src\HermesManager.psm1', 'src\HermesLocalization.ps1',
+    'scripts\Install-HermesManager.ps1', 'scripts\Uninstall-HermesManager.ps1'
 )
+if ($Language -eq 'en') {
+    $requiredSourceFiles += @('Hermes Manager.cmd', 'hermes-en.cmd', 'Install.cmd', 'Uninstall.cmd',
+        'Activate global aliases.cmd', 'Activate global aliases.ps1', 'INSTALLATION-GUIDE.md',
+        'NOTICE.en.md', 'SECURITY.en.md')
+} else {
+    $requiredSourceFiles += @('Hermes Manager.cmd', 'hermes.cmd', 'Instalar.cmd', 'Desinstalar.cmd',
+        'Activar alias globales.cmd', 'Activar alias globales.ps1', 'GUIA-INSTALACION.md',
+        'NOTICE.md', 'SECURITY.md')
+}
 foreach ($relative in $requiredSourceFiles) {
     if (-not (Test-Path -LiteralPath (Join-Path $SourceRoot $relative) -PathType Leaf)) {
-        throw "El paquete está incompleto: falta $relative"
+        Stop-HermesInstallation "El paquete está incompleto: falta $relative"
     }
 }
 
@@ -80,21 +92,15 @@ if (Test-Path -LiteralPath $DestinationRoot) {
             $validMarker = $false
         }
         if (-not $validMarker) {
-            throw "La carpeta de destino no está vacía y no es una instalación reconocida: $DestinationRoot"
+            Stop-HermesInstallation "La carpeta de destino no está vacía y no es una instalación reconocida: $DestinationRoot"
         }
     }
 } else {
     New-Item -ItemType Directory -Path $DestinationRoot -Force | Out-Null
 }
 
-$copyFiles = $requiredSourceFiles + @(
-    'Instalar.cmd', 'Desinstalar.cmd', 'Activar alias globales.cmd',
-    'Activar alias globales.ps1', 'GUIA-INSTALACION.md', '.gitignore',
-    'Install (English).cmd', 'Uninstall (English).cmd',
-    'Activate global aliases (English).cmd', 'Hermes Manager (English).cmd',
-    'hermes-en.cmd'
-)
-$copyDirectories = @('src', 'scripts', 'tests')
+$copyFiles = @($requiredSourceFiles | Where-Object { $_ -notmatch '[\\/]' }) + @('.gitignore')
+$copyDirectories = @('src', 'scripts')
 
 if ($DestinationRoot -ne $SourceRoot) {
     foreach ($relative in $copyFiles) {
@@ -109,6 +115,22 @@ if ($DestinationRoot -ne $SourceRoot) {
         if (Test-Path -LiteralPath $destination) { Remove-Item -LiteralPath $destination -Recurse -Force }
         Copy-Item -LiteralPath $source -Destination $destination -Recurse -Force
     }
+
+    $obsoleteFiles = if ($Language -eq 'en') {
+        @('Instalar.cmd', 'Desinstalar.cmd', 'Activar alias globales.cmd', 'Activar alias globales.ps1',
+            'GUIA-INSTALACION.md', 'README.es.md', 'hermes.cmd',
+            'Install (English).cmd', 'Uninstall (English).cmd',
+            'Activate global aliases (English).cmd', 'Hermes Manager (English).cmd')
+    } else {
+        @('Install.cmd', 'Uninstall.cmd', 'Activate global aliases.cmd', 'Activate global aliases.ps1',
+            'INSTALLATION-GUIDE.md', 'SECURITY.en.md', 'NOTICE.en.md', 'hermes-en.cmd',
+            'Install (English).cmd', 'Uninstall (English).cmd',
+            'Activate global aliases (English).cmd', 'Hermes Manager (English).cmd')
+    }
+    foreach ($relative in $obsoleteFiles) {
+        $obsoletePath = Join-Path $DestinationRoot $relative
+        if (Test-Path -LiteralPath $obsoletePath -PathType Leaf) { Remove-Item -LiteralPath $obsoletePath -Force }
+    }
 }
 
 $modulePath = Join-Path $DestinationRoot 'src\HermesManager.psm1'
@@ -122,7 +144,7 @@ setlocal
 call "%~dp0..\__MANAGER_LAUNCHER__" %*
 exit /b %ERRORLEVEL%
 '@
-$managerLauncher = if ($Language -eq 'en') { 'Hermes Manager (English).cmd' } else { 'Hermes Manager.cmd' }
+$managerLauncher = 'Hermes Manager.cmd'
 $globalLauncher = $globalLauncher.Replace('__MANAGER_LAUNCHER__', $managerLauncher)
 $encoding = [Text.UTF8Encoding]::new($false)
 $globalCommand = if ($Language -eq 'en') { 'hermes-manager-en.cmd' } else { 'hermes-manager.cmd' }
@@ -135,7 +157,7 @@ if (-not $NoPath) {
 if (-not $NoShortcut) {
     $desktop = [Environment]::GetFolderPath('Desktop')
     if ($desktop) {
-        $shortcutName = if ($Language -eq 'en') { 'Hermes Manager (English).lnk' } else { 'Hermes Manager.lnk' }
+        $shortcutName = 'Hermes Manager.lnk'
         $shortcutPath = Join-Path $desktop $shortcutName
         $shell = New-Object -ComObject WScript.Shell
         $shortcut = $shell.CreateShortcut($shortcutPath)
@@ -157,8 +179,15 @@ $marker = [ordered]@{
 
 if (-not $NoTests) {
     $testScript = Join-Path $DestinationRoot 'tests\Test-HermesManager.ps1'
-    & powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File $testScript
-    if ($LASTEXITCODE -ne 0) { throw 'Las pruebas de Hermes Manager han fallado.' }
+    if (Test-Path -LiteralPath $testScript) {
+        if ($Language -eq 'en') {
+            & powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File $testScript *> $null
+        } else {
+            & powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File $testScript
+        }
+        if ($LASTEXITCODE -ne 0) { Stop-HermesInstallation 'Las pruebas de Hermes Manager han fallado.' }
+        if ($Language -eq 'en') { Write-Host 'Las comprobaciones de instalación terminaron correctamente.' }
+    }
 }
 
 Write-Host

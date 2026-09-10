@@ -11,7 +11,7 @@ Esta guía permite reproducir la configuración de Hermes Manager en otro equipo
 
 ## 2. Instalar Hermes Manager
 
-1. Descarga `Hermes-Manager-Windows-<versión>.zip` desde GitHub Releases.
+1. Descarga `Hermes-Manager-Windows-<versión>-Spanish.zip` desde GitHub Releases.
 2. Descomprime el ZIP.
 3. Haz doble clic en `Instalar.cmd` dentro de la carpeta descomprimida.
 4. Pulsa Intro para instalar en `%LOCALAPPDATA%\HermesManager` o escribe otra carpeta.
@@ -29,7 +29,7 @@ El instalador copia los archivos del gestor, crea `agents`, `bin`, `logs` y `tra
 También puedes descargar el archivo `.sha256` publicado junto al ZIP para comprobar manualmente su integridad. Guarda ambos en la misma carpeta y ejecuta:
 
 ```powershell
-$zip = '.\Hermes-Manager-Windows-<versión>.zip'
+$zip = '.\Hermes-Manager-Windows-<versión>-Spanish.zip'
 $esperado = ((Get-Content "$zip.sha256") -split '\s+')[0]
 $actual = (Get-FileHash -Algorithm SHA256 $zip).Hash.ToLowerInvariant()
 if ($actual -ne $esperado) { throw 'El ZIP no coincide con el checksum publicado.' }
@@ -38,7 +38,7 @@ if ($actual -ne $esperado) { throw 'El ZIP no coincide con el checksum publicado
 
 Para instalar no necesitas clonar el repositorio. Descarga el ZIP de la sección **Releases**. Los enlaces **Source code (zip)** y **Source code (tar.gz)** de GitHub contienen el código fuente y no sustituyen al paquete de instalación.
 
-La variante predeterminada utiliza mensajes en español. Para una instalación en inglés, ejecuta `Install (English).cmd`; crea el acceso directo **Hermes Manager (English)** y el comando global `hermes-manager-en.cmd`. También incluye `Uninstall (English).cmd` y `Activate global aliases (English).cmd`.
+La Release publica dos paquetes separados. Este documento corresponde al ZIP `Spanish`; el ZIP `English` contiene su propia guía, instalador, menús y comandos íntegramente en inglés.
 
 ## 3. Crear un agente
 

@@ -6,6 +6,7 @@ $Root = $PSScriptRoot
 Import-Module (Join-Path $Root 'src\HermesManager.psm1') -Force
 . (Join-Path $Root 'src\HermesLocalization.ps1')
 Set-HermesLanguage -Language $Language
+$env:HERMES_MANAGER_LANGUAGE = $Language
 
 function Write-Host {
     param(
@@ -20,14 +21,14 @@ function Write-Host {
 
 $aliases = @(Get-HermesAgents -Root $Root | Where-Object { $_.TerminalAlias })
 if (-not $aliases.Count) {
-    throw 'No hay alias configurados. Abre Hermes Manager y utiliza la opción A.'
+    throw (ConvertTo-HermesLocalizedText -Text 'No hay alias configurados. Abre Hermes Manager y utiliza la opción A.')
 }
 
 $added = Install-HermesAliasPath -Root $Root
 $binPath = Get-HermesBinPath -Root $Root
 $userPath = [string][Environment]::GetEnvironmentVariable('Path', 'User')
 if (@($userPath -split ';' | Where-Object { $_.TrimEnd('\').Equals($binPath, [StringComparison]::OrdinalIgnoreCase) }).Count -eq 0) {
-    throw "No se pudo registrar $binPath en el PATH del usuario."
+    throw (ConvertTo-HermesLocalizedText -Text "No se pudo registrar $binPath en el PATH del usuario.")
 }
 
 Write-Host

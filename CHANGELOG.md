@@ -2,6 +2,13 @@
 
 Todos los cambios relevantes se documentarán aquí.
 
+## 1.2.0 - 2026-09-10
+
+- Paquetes de Release separados para español e inglés.
+- El paquete inglés excluye lanzadores, documentación y pruebas en español.
+- Traducción completa de errores, estados, confirmaciones y archivos generados para agentes ingleses.
+- Guía de instalación, política de seguridad y aviso legal disponibles en inglés.
+
 ## 1.1.0 - 2026-09-10
 
 - Instalador y gestor disponibles con mensajes y comandos en español o inglés.
