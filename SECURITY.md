@@ -13,7 +13,7 @@ Incluye únicamente la versión de Hermes Manager, versión de Windows y Docker 
 ## Modelo de seguridad
 
 - La Release no contiene imágenes Docker. Docker descarga la imagen externa configurada cuando se necesita.
-- La imagen predeterminada `nousresearch/hermes-agent:latest` es código de un tercero y puede cambiar cuando se actualiza. Para una réplica inmutable, configura una etiqueta y un digest verificados.
+- La imagen predeterminada de `nousresearch/hermes-agent` está fijada por digest para impedir cambios silenciosos. Verifica y actualiza explícitamente ese digest cuando adoptes una nueva versión.
 - Los agentes se ejecutan en contenedores endurecidos con sistema de archivos de solo lectura, capacidades reducidas y `no-new-privileges`.
 - No se monta el socket de Docker dentro de los agentes.
 - No se publican puertos por defecto.

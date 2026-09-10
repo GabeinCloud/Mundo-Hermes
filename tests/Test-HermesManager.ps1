@@ -56,6 +56,8 @@ try {
     Assert-True ($compose -match 'name: hermes-publicacion-agil') 'Compose usa proyecto aislado'
     Assert-True ($compose -match 'container_name: hermes-publicacion-agil') 'Compose usa contenedor aislado'
     Assert-True ($compose -match '\./data:/opt/data:rw') 'Los datos se enlazan dentro del agente'
+    Assert-True ($compose -match 'nousresearch/hermes-agent@sha256:41b9ed005cebcb3d3fb45206ce27cfb0356ba99b190c0924bab5141b15ad8e71') 'Compose fija la imagen predeterminada por digest'
+    Assert-True ($compose -notmatch ':latest') 'Compose no usa etiquetas de imagen mutables'
     Assert-True ($compose -match 'no-new-privileges:true') 'Activa no-new-privileges'
     Assert-True ($compose -match 'cap_drop:\s*\r?\n\s*- ALL') 'Elimina capacidades por defecto'
     Assert-True ($compose -notmatch [regex]::Escape($TestRoot)) 'Compose no contiene rutas absolutas'
@@ -129,7 +131,7 @@ exit /b 0
     Assert-Equal @(Get-HermesAgents -Root $TestRoot).Count 0 'El agente deja de figurar tras retirarlo'
 
     $settings = Get-HermesSettings -Root $TestRoot
-    Assert-Equal $settings.hermes_image 'nousresearch/hermes-agent:latest' 'Usa la imagen oficial configurable'
+    Assert-Equal $settings.hermes_image 'nousresearch/hermes-agent@sha256:41b9ed005cebcb3d3fb45206ce27cfb0356ba99b190c0924bab5141b15ad8e71' 'Usa la imagen oficial configurable fijada por digest'
     Assert-True ($null -eq $settings.PSObject.Properties['manager_version']) 'Mantiene settings limitado a opciones configurables'
     Assert-True ($null -eq $settings.PSObject.Properties['ollama_container_url']) 'No genera opciones sin consumidor'
 

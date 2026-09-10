@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "hermes_image": "nousresearch/hermes-agent:latest",
+  "hermes_image": "nousresearch/hermes-agent@sha256:41b9ed005cebcb3d3fb45206ce27cfb0356ba99b190c0924bab5141b15ad8e71",
   "docker_start_timeout_seconds": 120,
   "ollama_windows_url": "http://localhost:11434"
 }

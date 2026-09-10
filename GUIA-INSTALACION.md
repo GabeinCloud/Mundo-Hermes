@@ -44,7 +44,7 @@ if ($actual -ne $esperado) { throw 'El ZIP no coincide con el checksum publicado
 4. Configura el proveedor y modelo mediante el asistente de Hermes Agent.
 5. Inicia el agente.
 
-Durante la configuración o el primer inicio, Docker descarga `nousresearch/hermes-agent:latest` si no está disponible localmente. La descarga se realiza desde el registro configurado por Docker y puede tardar varios minutos.
+Durante la configuración o el primer inicio, Docker descarga la versión de `nousresearch/hermes-agent` fijada por digest si no está disponible localmente. La descarga se realiza desde el registro configurado por Docker y puede tardar varios minutos.
 
 ## 4. Archivos que se generan
 
@@ -78,16 +78,16 @@ La red permite conexiones salientes. Son necesarias para acceder al proveedor co
 La imagen utilizada está en `<carpeta de instalación>\settings.json`:
 
 ```json
-"hermes_image": "nousresearch/hermes-agent:latest"
+"hermes_image": "nousresearch/hermes-agent@sha256:41b9ed005cebcb3d3fb45206ce27cfb0356ba99b190c0924bab5141b15ad8e71"
 ```
 
-`latest` facilita recibir la versión reciente al elegir **Actualizar agente**. Para reproducir exactamente una versión conocida, sustituye ese valor por una etiqueta inmutable o por el digest publicado por el proveedor:
+El digest evita que una etiqueta mutable cambie silenciosamente el código ejecutado. Para adoptar otra versión, verifica el digest publicado por el proveedor y sustituye el valor:
 
 ```json
-"hermes_image": "nousresearch/hermes-agent:<versión>@sha256:<digest>"
+"hermes_image": "nousresearch/hermes-agent@sha256:<digest-verificado>"
 ```
 
-Hermes Manager pasa ese valor a Docker Compose. No descarga, almacena ni redistribuye la imagen dentro de su ZIP. Antes de fijar una versión o digest, comprueba que existe en el registro oficial del proyecto.
+Hermes Manager pasa ese valor a Docker Compose. **Actualizar agente** vuelve a descargar la referencia configurada, pero no cambia automáticamente el digest. No almacena ni redistribuye la imagen dentro de su ZIP. Antes de cambiar el digest, comprueba que existe en el registro oficial del proyecto.
 
 ## 6. Abrirlo desde una terminal
 
