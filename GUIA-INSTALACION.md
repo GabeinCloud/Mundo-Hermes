@@ -36,6 +36,8 @@ if ($actual -ne $esperado) { throw 'El ZIP no coincide con el checksum publicado
 'Checksum correcto'
 ```
 
+Para instalar no necesitas clonar el repositorio. Descarga el ZIP de la sección **Releases**. Los enlaces **Source code (zip)** y **Source code (tar.gz)** de GitHub contienen el código fuente y no sustituyen al paquete de instalación.
+
 ## 3. Crear un agente
 
 1. Elige **Crear agente**.
@@ -60,6 +62,8 @@ Cada agente se guarda en `<carpeta de instalación>\agents\<nombre>`:
 | `data\home` | Directorio personal persistente del proceso. |
 | `data\workspace` | Documentos y trabajo persistente. |
 | `data\logs` | Registros propios del agente. |
+
+No subas al repositorio ni a incidencias `agents/`, `bin/`, `logs/`, `trash/`, archivos `.env`, `config.yaml` o `.hermes-manager-install.json`. Pueden contener credenciales, conversaciones, registros y rutas específicas del equipo.
 
 La plantilla aplica estas decisiones:
 

@@ -29,6 +29,8 @@ Eso es todo. El ZIP incluye el instalador, los scripts, las configuraciones, la 
 
 La carpeta recomendada es `%LOCALAPPDATA%\HermesManager`, pero puedes elegir otra durante la instalación. No se necesitan permisos de administrador si la ubicación elegida permite escribir al usuario. El instalador registra la carpeta `bin` de esa instalación en el `PATH` del usuario.
 
+No necesitas ejecutar `git clone` para instalar o utilizar Hermes Manager. La página de **Releases** contiene el paquete preparado para usuarios. Los ZIP de **Source code** que muestra GitHub contienen el código fuente del repositorio y están destinados al desarrollo, no a la instalación normal.
+
 #### Verificación opcional de la descarga
 
 La Release también publica un archivo `.sha256`. No es necesario para instalar, pero permite comprobar manualmente que el ZIP descargado no está dañado ni ha sido modificado. Se publica fuera del ZIP porque un archivo no puede verificar su propia descarga.
@@ -74,6 +76,8 @@ La configuración generada utiliza un sistema de archivos de contenedor de solo 
 Cada agente guarda su identidad, configuración, claves, conversaciones y documentos en `<carpeta de instalación>\agents\<nombre>\data`.
 
 No publiques ni adjuntes esa carpeta a incidencias. Los directorios de datos, alias, registros y papelera están excluidos por `.gitignore` y por el generador de Releases.
+
+No subas nunca `agents/`, `bin/`, `logs/`, `trash/`, `.env`, `config.yaml` ni `.hermes-manager-install.json`. Esas rutas pueden contener credenciales, conversaciones, registros o datos específicos de la instalación.
 
 Consulta [GUIA-INSTALACION.md](GUIA-INSTALACION.md) para reproducir paso a paso la configuración, conocer todos los archivos generados y fijar una versión o digest concreto de la imagen.
 
