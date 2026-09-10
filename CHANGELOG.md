@@ -11,6 +11,7 @@ Todos los cambios relevantes se documentarán aquí.
 - Alias globales por agente.
 - Actualización de imágenes preservando datos.
 - Descarga bajo demanda de la imagen externa, sin incluir imágenes Docker en la Release.
+- Imagen predeterminada fijada a un digest OCI multi-arquitectura verificado.
 - Validación estricta de destinos de instalación y marcadores de desinstalación.
 - Comprobaciones que impiden empaquetar exportaciones Docker u OCI.
 - Guía reproducible con instalación sencilla, verificación SHA-256 opcional y descripción de toda la configuración generada.

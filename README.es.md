@@ -88,7 +88,7 @@ hermes-manager
 
 ## Actualización
 
-- **Actualizar agente** descarga la imagen configurada y conserva sus datos.
+- **Actualizar agente** descarga o verifica la imagen fijada por digest y conserva sus datos. Una nueva versión del gestor puede publicar un digest actualizado.
 - Para actualizar Hermes Manager, ejecuta `Instalar.cmd` desde una Release más reciente y elige la misma carpeta utilizada anteriormente. El instalador sustituye solo los archivos de programa.
 
 ## Desarrollo

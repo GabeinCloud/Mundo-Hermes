@@ -55,6 +55,8 @@ try {
     $compose = Get-Content -Raw -LiteralPath (Join-Path $agent.Path 'compose.yaml')
     Assert-True ($compose -match 'name: hermes-publicacion-agil') 'Compose usa proyecto aislado'
     Assert-True ($compose -match 'container_name: hermes-publicacion-agil') 'Compose usa contenedor aislado'
+    Assert-True ($compose -match 'image:\s*\$\{HERMES_IMAGE:-nousresearch/hermes-agent@sha256:[0-9a-f]{64}\}') 'Compose fija la imagen por digest SHA-256'
+    Assert-True ($compose -notmatch 'nousresearch/hermes-agent:latest') 'Compose no usa etiquetas mutables'
     Assert-True ($compose -match '\./data:/opt/data:rw') 'Los datos se enlazan dentro del agente'
     Assert-True ($compose -match 'no-new-privileges:true') 'Activa no-new-privileges'
     Assert-True ($compose -match 'cap_drop:\s*\r?\n\s*- ALL') 'Elimina capacidades por defecto'
@@ -129,9 +131,17 @@ exit /b 0
     Assert-Equal @(Get-HermesAgents -Root $TestRoot).Count 0 'El agente deja de figurar tras retirarlo'
 
     $settings = Get-HermesSettings -Root $TestRoot
-    Assert-Equal $settings.hermes_image 'nousresearch/hermes-agent:latest' 'Usa la imagen oficial configurable'
+    Assert-Equal $settings.hermes_image 'nousresearch/hermes-agent@sha256:41b9ed005cebcb3d3fb45206ce27cfb0356ba99b190c0924bab5141b15ad8e71' 'Usa la imagen oficial fijada por digest'
     Assert-True ($null -eq $settings.PSObject.Properties['manager_version']) 'Mantiene settings limitado a opciones configurables'
     Assert-True ($null -eq $settings.PSObject.Properties['ollama_container_url']) 'No genera opciones sin consumidor'
+
+    $settingsPath = Join-Path $TestRoot 'settings.json'
+    $mutableSettings = Get-Content -Raw -Encoding UTF8 -LiteralPath $settingsPath | ConvertFrom-Json
+    $mutableSettings.hermes_image = 'nousresearch/hermes-agent:latest'
+    [IO.File]::WriteAllText($settingsPath, (($mutableSettings | ConvertTo-Json -Depth 4) + "`n"), [Text.UTF8Encoding]::new($false))
+    $mutableImageRejected = $false
+    try { Get-HermesSettings -Root $TestRoot | Out-Null } catch { $mutableImageRejected = $true }
+    Assert-True $mutableImageRejected 'Rechaza imágenes configuradas mediante etiquetas mutables'
 
     $parseTargets = @(
         (Join-Path $ProjectRoot 'HermesManager.ps1'),

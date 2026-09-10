@@ -1,7 +1,7 @@
 ﻿Set-StrictMode -Version 2.0
 
 $script:ManagerVersion = '1.0.0'
-$script:DefaultImage = 'nousresearch/hermes-agent:latest'
+$script:DefaultImage = 'nousresearch/hermes-agent@sha256:41b9ed005cebcb3d3fb45206ce27cfb0356ba99b190c0924bab5141b15ad8e71'
 
 function Get-HermesRoot {
     [CmdletBinding()]
@@ -62,6 +62,9 @@ function Get-HermesSettings {
     $settings = Get-Content -Raw -Encoding UTF8 -LiteralPath $settingsPath | ConvertFrom-Json
     if (-not $settings.hermes_image) {
         throw "settings.json no contiene hermes_image."
+    }
+    if ([string]$settings.hermes_image -notmatch '@sha256:[0-9a-fA-F]{64}$') {
+        throw 'settings.json debe fijar hermes_image mediante @sha256:<digest>.'
     }
     return $settings
 }
@@ -125,7 +128,7 @@ name: hermes-__SLUG__
 
 services:
   agent:
-    image: ${HERMES_IMAGE:-nousresearch/hermes-agent:latest}
+    image: ${HERMES_IMAGE:-nousresearch/hermes-agent@sha256:41b9ed005cebcb3d3fb45206ce27cfb0356ba99b190c0924bab5141b15ad8e71}
     container_name: hermes-__SLUG__
     command: ["gateway", "run"]
     restart: unless-stopped

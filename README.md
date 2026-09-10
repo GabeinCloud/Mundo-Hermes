@@ -90,7 +90,7 @@ The command names remain in Spanish. Run `hermes ayuda` to display all available
 
 ## Updating
 
-- **Update agent** downloads the configured image and preserves its data.
+- **Update agent** downloads or verifies the digest-pinned image and preserves its data. A new manager release may publish an updated digest.
 - To update Hermes Manager, run `Instalar.cmd` from a newer Release and select the same installation folder. The installer replaces only program files.
 
 ## Development

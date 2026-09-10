@@ -44,7 +44,7 @@ if ($actual -ne $esperado) { throw 'El ZIP no coincide con el checksum publicado
 4. Configura el proveedor y modelo mediante el asistente de Hermes Agent.
 5. Inicia el agente.
 
-Durante la configuración o el primer inicio, Docker descarga `nousresearch/hermes-agent:latest` si no está disponible localmente. La descarga se realiza desde el registro configurado por Docker y puede tardar varios minutos.
+Durante la configuración o el primer inicio, Docker descarga la versión aprobada de `nousresearch/hermes-agent` si no está disponible localmente. La referencia está fijada por digest para que el contenido no pueda cambiar sin una actualización explícita de Hermes Manager. La descarga se realiza desde el registro configurado por Docker y puede tardar varios minutos.
 
 ## 4. Archivos que se generan
 
@@ -78,16 +78,18 @@ La red permite conexiones salientes. Son necesarias para acceder al proveedor co
 La imagen utilizada está en `<carpeta de instalación>\settings.json`:
 
 ```json
-"hermes_image": "nousresearch/hermes-agent:latest"
+"hermes_image": "nousresearch/hermes-agent@sha256:41b9ed005cebcb3d3fb45206ce27cfb0356ba99b190c0924bab5141b15ad8e71"
 ```
 
-`latest` facilita recibir la versión reciente al elegir **Actualizar agente**. Para reproducir exactamente una versión conocida, sustituye ese valor por una etiqueta inmutable o por el digest publicado por el proveedor:
+El digest identifica exactamente el índice OCI aprobado, con manifiestos para `linux/amd64` y `linux/arm64`. **Actualizar agente** descarga o verifica esa misma imagen; no cambia silenciosamente a otra versión. Las nuevas versiones de Hermes Manager podrán actualizar el digest después de verificar una nueva publicación del proveedor.
+
+Para usar otra versión de forma consciente, sustituye el valor por una etiqueta inmutable acompañada de su digest publicado por el proveedor:
 
 ```json
 "hermes_image": "nousresearch/hermes-agent:<versión>@sha256:<digest>"
 ```
 
-Hermes Manager pasa ese valor a Docker Compose. No descarga, almacena ni redistribuye la imagen dentro de su ZIP. Antes de fijar una versión o digest, comprueba que existe en el registro oficial del proyecto.
+Hermes Manager pasa ese valor a Docker Compose. No descarga, almacena ni redistribuye la imagen dentro de su ZIP. Antes de cambiar una versión o digest, comprueba que existe en el registro oficial del proyecto.
 
 ## 6. Abrirlo desde una terminal
 
@@ -119,7 +121,7 @@ Instala y abre Ollama en Windows. Hermes Manager detecta sus modelos mediante `h
 
 ## 9. Actualizar
 
-- Para Hermes Agent, utiliza **Actualizar agente** en el menú. Esta acción ejecuta la descarga de la imagen configurada y conserva `data`.
+- Para Hermes Agent, utiliza **Actualizar agente** en el menú. Esta acción descarga o verifica la imagen fijada y conserva `data`. Para recibir una imagen aprobada más reciente, actualiza primero Hermes Manager.
 - Para Hermes Manager, descarga una Release nueva, ejecuta su `Instalar.cmd` y selecciona la misma carpeta. Los agentes y datos existentes se conservan.
 
 ## 10. Copia de seguridad y desinstalación
