@@ -6,6 +6,10 @@ Reproducible configuration and a community manager for creating Hermes agents wi
 
 > This project is not official and is not affiliated with Nous Research. The Release does not include Hermes or any Docker image. Docker downloads the external public image `nousresearch/hermes-agent` when it is first needed.
 
+## Why this exists
+
+Running Hermes on Windows involves Docker Desktop, a Compose configuration, persistent agent data and several recurring commands. Hermes Manager brings those pieces together in a small, reproducible workflow: create isolated agents, keep their data separate, configure them through the official assistant and start or update them without writing Docker Compose by hand. It is a community convenience layer around Hermes, not a replacement for Hermes or Docker Desktop.
+
 ## Quick installation
 
 ### Requirements
