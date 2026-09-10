@@ -2,6 +2,12 @@
 
 Todos los cambios relevantes se documentarán aquí.
 
+## 1.2.1 - 2026-09-10
+
+- README y guías alineados con los paquetes separados `English` y `Spanish`.
+- Enlaces directos a la última Release e instrucciones claras sobre los archivos `Source code` automáticos de GitHub.
+- Contenido real de cada ZIP descrito sin mencionar pruebas que no se distribuyen.
+
 ## 1.2.0 - 2026-09-10
 
 - Paquetes de Release separados para español e inglés.

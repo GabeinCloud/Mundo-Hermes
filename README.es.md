@@ -22,20 +22,22 @@ No necesitas instalar Python, Git, PowerShell 7 ni Hermes directamente en Window
 
 ### Desde una Release de GitHub
 
-1. Descarga `Hermes-Manager-Windows-<versión>-Spanish.zip` desde **Releases**.
+1. Abre [Releases](https://github.com/GabeinCloud/Mundo-Hermes/releases/latest) y descarga `Hermes-Manager-Windows-<versión>-Spanish.zip`.
 2. Descomprime el ZIP.
 3. Haz doble clic en `Instalar.cmd`.
 4. Pulsa Intro para usar la carpeta recomendada o escribe otra carpeta de instalación.
 5. Espera a que terminen las comprobaciones.
 6. Abre **Hermes Manager** desde el acceso directo del escritorio.
 
-Eso es todo. El ZIP incluye el instalador, los scripts, las configuraciones, la documentación y las pruebas del gestor. No incluye Docker Desktop ni la imagen de Hermes: Docker descarga esa imagen automáticamente al configurar o iniciar el primer agente.
+Eso es todo. El ZIP incluye el instalador, los archivos del gestor, la configuración y la documentación en español. No incluye Docker Desktop ni la imagen de Hermes: Docker descarga esa imagen automáticamente al configurar o iniciar el primer agente.
 
 La carpeta recomendada es `%LOCALAPPDATA%\HermesManager`, pero puedes elegir otra durante la instalación. No se necesitan permisos de administrador si la ubicación elegida permite escribir al usuario. El instalador registra la carpeta `bin` de esa instalación en el `PATH` del usuario.
 
 No necesitas ejecutar `git clone` para instalar o utilizar Hermes Manager. La página de **Releases** contiene el paquete preparado para usuarios. Los ZIP de **Source code** que muestra GitHub contienen el código fuente del repositorio y están destinados al desarrollo, no a la instalación normal.
 
-La Release publica paquetes separados para español e inglés. El ZIP español contiene únicamente la experiencia y documentación para usuarios en español; el ZIP inglés utiliza nombres, menús, mensajes, archivos generados y documentación en inglés.
+La Release publica paquetes separados para español e inglés. El ZIP español contiene únicamente la experiencia y documentación para usuarios en español; el ZIP inglés utiliza nombres, menús, mensajes, archivos generados y documentación en inglés. Solo se mantiene la Release más reciente.
+
+Dentro de **Assets**, elige el ZIP cuyo nombre termina en `-Spanish.zip`. No utilices los archivos automáticos **Source code (zip)** o **Source code (tar.gz)** para instalar: son copias del repositorio, no instaladores preparados.
 
 #### Verificación opcional de la descarga
 

@@ -1,6 +1,6 @@
 ﻿Set-StrictMode -Version 2.0
 
-$script:ManagerVersion = '1.2.0'
+$script:ManagerVersion = '1.2.1'
 $script:DefaultImage = 'nousresearch/hermes-agent@sha256:41b9ed005cebcb3d3fb45206ce27cfb0356ba99b190c0924bab5141b15ad8e71'
 
 function Get-HermesRoot {

@@ -11,7 +11,7 @@ This guide installs and operates Hermes Manager on another Windows computer. The
 
 ## 2. Install Hermes Manager
 
-1. Download `Hermes-Manager-Windows-<version>-en.zip` from GitHub Releases.
+1. Download `Hermes-Manager-Windows-<version>-English.zip` from the [latest Release](https://github.com/GabeinCloud/Mundo-Hermes/releases/latest).
 2. Extract the ZIP.
 3. Double-click `Install.cmd` inside the extracted folder.
 4. Press Enter to install under `%LOCALAPPDATA%\HermesManager`, or enter another folder.
@@ -27,7 +27,7 @@ The destination must be empty or contain a recognized Hermes Manager installatio
 Download the matching `.sha256` file next to the ZIP and run:
 
 ```powershell
-$zip = '.\Hermes-Manager-Windows-<version>-en.zip'
+$zip = '.\Hermes-Manager-Windows-<version>-English.zip'
 $expected = ((Get-Content "$zip.sha256") -split '\s+')[0]
 $actual = (Get-FileHash -Algorithm SHA256 $zip).Hash.ToLowerInvariant()
 if ($actual -ne $expected) { throw 'The ZIP does not match the published checksum.' }

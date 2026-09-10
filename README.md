@@ -22,7 +22,7 @@ You do not need to install Python, Git, PowerShell 7 or Hermes directly on Windo
 
 ### From a GitHub Release
 
-1. Download `Hermes-Manager-Windows-<version>-English.zip` from **Releases**.
+1. Open [Releases](https://github.com/GabeinCloud/Mundo-Hermes/releases/latest) and download `Hermes-Manager-Windows-<version>-English.zip`.
 2. Extract the ZIP.
 3. Double-click `Install.cmd`.
 4. Press Enter to use the recommended folder or enter another installation folder.
@@ -35,7 +35,9 @@ The recommended folder is `%LOCALAPPDATA%\HermesManager`, but you can choose ano
 
 You do not need `git clone` to install or use Hermes Manager. The **Releases** page contains the package prepared for users. The **Source code** ZIP files shown by GitHub contain the repository source and are intended for development, not for the normal installation flow.
 
-The English ZIP contains only the English user experience and documentation. The Spanish ZIP is published separately. The English installer creates the **Hermes Manager** shortcut and the `hermes-manager-en` terminal command; use `Uninstall.cmd` to uninstall.
+The English ZIP contains only the English user experience and documentation. The Spanish ZIP is published separately. The English installer creates the **Hermes Manager** shortcut and the `hermes-manager-en` terminal command; use `Uninstall.cmd` to uninstall. Only the latest Release is supported.
+
+Under **Assets**, choose the ZIP whose name ends in `-English.zip`. Do not use GitHub's automatic **Source code (zip)** or **Source code (tar.gz)** archives for installation; they are repository snapshots, not prepared installers.
 
 #### Optional download verification
 

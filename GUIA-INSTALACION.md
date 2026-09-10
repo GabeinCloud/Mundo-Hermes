@@ -11,18 +11,18 @@ Esta guía permite reproducir la configuración de Hermes Manager en otro equipo
 
 ## 2. Instalar Hermes Manager
 
-1. Descarga `Hermes-Manager-Windows-<versión>-Spanish.zip` desde GitHub Releases.
+1. Descarga `Hermes-Manager-Windows-<versión>-Spanish.zip` desde la [Release más reciente](https://github.com/GabeinCloud/Mundo-Hermes/releases/latest).
 2. Descomprime el ZIP.
 3. Haz doble clic en `Instalar.cmd` dentro de la carpeta descomprimida.
 4. Pulsa Intro para instalar en `%LOCALAPPDATA%\HermesManager` o escribe otra carpeta.
 5. Espera a que terminen las comprobaciones.
 6. Abre el acceso directo **Hermes Manager**.
 
-El ZIP ya contiene todo lo necesario para instalar el gestor: scripts, configuraciones, documentación y pruebas. No contiene Docker Desktop, Hermes Agent, modelos ni datos privados. Docker descarga la imagen de Hermes automáticamente cuando se necesita por primera vez.
+El ZIP ya contiene todo lo necesario para instalar el gestor: instalador, archivos del programa, configuración y documentación en español. No contiene Docker Desktop, Hermes Agent, modelos ni datos privados. Docker descarga la imagen de Hermes automáticamente cuando se necesita por primera vez.
 
 La ruta recomendada no necesita permisos de administrador. También puedes elegir otra ubicación donde tu usuario tenga permiso de escritura. La carpeta debe estar vacía o contener una instalación reconocida de Hermes Manager.
 
-El instalador copia los archivos del gestor, crea `agents`, `bin`, `logs` y `trash`, añade `bin` al `PATH` del usuario, ejecuta las pruebas y crea el acceso directo. No instala Docker, no descarga Hermes durante la instalación y no modifica el `PATH` del sistema.
+El instalador comprueba el paquete, copia los archivos del gestor, crea `agents`, `bin`, `logs` y `trash`, añade `bin` al `PATH` del usuario y crea el acceso directo. No instala Docker, no descarga Hermes durante la instalación y no modifica el `PATH` del sistema.
 
 ### Verificación opcional
 
